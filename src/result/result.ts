@@ -1,17 +1,22 @@
 import { CompositeError, isCompositeError } from "../CompositeError";
-import { MergeCombinedResult, MergeCompositeError, ResultData } from "./types";
+import {
+  CombinedResult,
+  MergeCombinedResult,
+  MergeCompositeError,
+  ResultData,
+} from "./types";
 import { isCombinedResult, isError } from "./utils";
 
-export type ExtractResult<R> = R extends Result<infer T, any> ? T : never;
-export type ExtractError<R> = R extends Result<any, infer E>
+export type ExtractResult<R> = R extends Resultable<infer T, any> ? T : never;
+export type ExtractError<R> = R extends Resultable<any, infer E>
   ? E extends Error
     ? E
     : never
   : never;
 
-export interface Result<T, E extends Error = Error> {
-  isOk(): boolean;
-  isErr(): boolean;
+export interface Resultable<T, E extends Error = Error> {
+  isOk(): this is OkResult<T, E>;
+  isErr(): this is ErrorResult<T, E>;
   unwrap(): T;
   unwrapOr(val: T): T;
   unwrapOrElse(f: (err: E) => T): T;
@@ -22,14 +27,29 @@ export interface Result<T, E extends Error = Error> {
   ): Result<MergeCombinedResult<T, U>, MergeCompositeError<E, Eo>>;
 }
 
-export class _Result<T, E extends Error = Error> implements Result<T, E> {
-  constructor(public readonly data: ResultData<T, E>) {}
+interface OkResult<T, E extends Error> extends Resultable<T, E> {
+  getValue(): T;
+}
 
-  public isOk(): boolean {
+interface ErrorResult<T, E extends Error> extends Resultable<T, E> {
+  getErr(): E;
+}
+
+export type Result<T, E extends Error = Error> =
+  | OkResult<T, E>
+  | ErrorResult<T, E>;
+
+abstract class _Result<T, E extends Error = Error> implements Resultable<T, E> {
+  public readonly data: ResultData<T, E>;
+  constructor(val: ResultData<T, E>) {
+    this.data = val;
+  }
+
+  public isOk(): this is OkResult<T, never> {
     return !isError(this.data);
   }
 
-  public isErr(): boolean {
+  public isErr(): this is ErrorResult<never, E> {
     return isError(this.data);
   }
 
@@ -73,13 +93,13 @@ export class _Result<T, E extends Error = Error> implements Result<T, E> {
         if (isCombinedResult(this.data.val) && isCombinedResult(otherResult)) {
           return ok({
             __typename: "CombinedResult",
-            result: [...this.data.val.result, ...otherResult.result],
+            result: [...this.data.val.values, ...otherResult.values],
           }) as any;
         }
         if (isCombinedResult(this.data.val))
           return ok({
             __typename: "CombinedResult",
-            result: [...this.data.val.result, otherResult],
+            result: [...this.data.val.values, otherResult],
           }) as any;
         return ok({
           __typename: "CombinedResult",
@@ -121,13 +141,34 @@ export class _Result<T, E extends Error = Error> implements Result<T, E> {
   }
 }
 
-export const ok = <T>(val: T): Result<T, never> => new _Result({ val });
+class _OkResult<T> extends _Result<T, never> implements OkResult<T, never> {
+  constructor(private val: T) {
+    super({ val });
+  }
+  getValue(): T {
+    return this.val;
+  }
+}
+
+class _ErrorResult<E extends Error>
+  extends _Result<never, E>
+  implements ErrorResult<never, E>
+{
+  constructor(private err: E) {
+    super({ err });
+  }
+  getErr(): E {
+    return this.err;
+  }
+}
+
+export const ok = <T>(val: T): Result<T, never> => new _OkResult(val);
 export const error = <E extends Error>(err: E): Result<never, E> =>
-  new _Result({ err });
+  new _ErrorResult<E>(err);
 export const tryAll = <T extends Result<any, any>[]>(
   ...results: T
 ): Result<
-  { [I in keyof T]: ExtractResult<T[I]> },
+  CombinedResult<{ [I in keyof T]: ExtractResult<T[I]> }>,
   CompositeError<{ [R in keyof T]: ExtractError<T[R]> }>
 > => {
   const r: { [I in keyof T]: ExtractResult<T[I]> } = [] as any;
@@ -146,5 +187,20 @@ export const tryAll = <T extends Result<any, any>[]>(
     never,
     CompositeError<{ [R in keyof T]: ExtractError<T[R]> }>
   >;
-  return ok(r);
+  return ok({ __typename: "CombinedResult", values: r });
 };
+
+function testic(): Result<number> {
+  return ok(2);
+}
+
+function tryis() {
+  const r = testic().andTry(testic());
+
+  if (r.isOk()) {
+    const { values } = r.getValue();
+    return;
+  }
+
+  r.unwrap();
+}

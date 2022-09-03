@@ -1,11 +1,13 @@
 import { CompositeError } from "../CompositeError";
 
-export type ErrorResult<E extends Error> = { err: E };
-export type OkResult<T> = { val: T };
-export type ResultData<T, E extends Error> = OkResult<T> | ErrorResult<E>;
+export type ErrorResultData<E extends Error> = { err: E };
+export type OkResultData<T> = { val: T };
+export type ResultData<T, E extends Error> =
+  | OkResultData<T>
+  | ErrorResultData<E>;
 
 export type CombinedResult<T extends any[]> = {
-  result: T;
+  values: T;
   __typename: "CombinedResult";
 };
 

@@ -2,8 +2,14 @@
   "name": "resultjs",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+  "files": [
+		"/dist"
+	],
   "scripts": {
+    "clean": "rm -rf ./dist",
+		"build": "npm run clean && tsc --project tsconfig.build.json",
     "test": "jest"
   },
   "devDependencies": {

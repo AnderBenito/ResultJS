@@ -1,118 +1,100 @@
-import { CompositeError, error, ok } from '../../src';
+import { error, ok, Result } from "../../src";
 
+describe("Result test", () => {
+  describe("Test OK Result", () => {
+    function returnsAOKResult(): Result<number> {
+      return ok(10);
+    }
 
-class BaseError extends Error {}
+    it("Should narrow the result", () => {
+      const r = returnsAOKResult();
 
-describe('Result test', () => {
-  describe('Merging and combining', () => {
-    it('Should merge in OK', () => {
-      const r1 = ok(1);
-      const r2 = ok(true);
+      if (r.isOk()) {
+        expect(r.getValue()).toBe(10);
+      } else {
+        r.unwrap();
+        r.getErr();
+      }
+    });
+    it("Should unwrap correctly", () => {
+      const r = returnsAOKResult();
 
-      const r = r1.andTry(r2);
-
-      expect(r.isErr()).toBeFalsy();
+      expect(r.unwrap()).toBe(10);
     });
 
-    it('Should merge in Error', () => {
-      const r1 = ok(1);
-      const r2 = error(new BaseError('EXAMPLE ERROR'));
+    it("Should unwrap or correctly", () => {
+      const r = returnsAOKResult();
 
-      const r = r1.andTry(r2);
-
-      expect(r.isErr()).toBeTruthy();
-      expect(() => r.unwrap()).toThrow(CompositeError);
+      expect(r.unwrapOr(3)).toBe(10);
     });
 
-    it('Should merge in Error', () => {
-      const r1 = ok(1);
-      const r2 = error(
-        new CompositeError(new BaseError('EXAMPLE ERROR')),
-      );
+    it("Should unwrapOrElse correctly", () => {
+      const r = returnsAOKResult();
 
-      const r = r1.andTry(r2);
-
-      expect(r.isErr()).toBeTruthy();
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors.length,
-      ).toBe(1);
-      expect(() => r.unwrap()).toThrow(CompositeError);
+      expect(r.unwrapOrElse((err) => 2)).toBe(10);
     });
 
-    it('Should merge in Error', () => {
-      const r1 = ok(1);
-      const r2 = error(new BaseError('EXAMPLE ERROR'));
+    it("Should map correctly", () => {
+      const r = returnsAOKResult();
 
-      const r = r2.andTry(r1);
-
-      expect(r.isErr()).toBeTruthy();
-      expect(() => r.unwrap()).toThrow(CompositeError);
+      expect(r.map((val) => val + 1).unwrap()).toBe(11);
     });
 
-    it('Should merge in Error', () => {
-      class CustomError extends Error {}
-      const r1 = error(new CustomError('EXAMPLE ERROR 1'));
-      const r2 = error(new BaseError('EXAMPLE ERROR 2'));
+    it("Should mapErr correctly", () => {
+      const r = returnsAOKResult();
 
-      const r = r1.andTry(r2);
+      expect(
+        r.mapErr((err) => new Error(err.message + "New error")).unwrap()
+      ).toBe(10);
+    });
+  });
 
-      expect(r.isErr()).toBeTruthy();
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors.length,
-      ).toBe(2);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[0],
-      ).toBeInstanceOf(CustomError);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[1],
-      ).toBeInstanceOf(BaseError);
-      expect(() => r.unwrap()).toThrow(CompositeError);
+  describe("Test Error Result", () => {
+    class CustomError extends Error {}
+    function returnsAErrorResult(): Result<number> {
+      return error(new CustomError("Invalid result"));
+    }
+
+    it("Should narrow the result to err", () => {
+      const r = returnsAErrorResult();
+
+      if (r.isErr()) {
+        expect(r.getErr().message).toBe("Invalid result");
+      } else {
+        r.getValue();
+      }
     });
 
-    it('Should merge in Error', () => {
-      class CustomError extends Error {}
-      const r1 = error(
-        new CompositeError(new CustomError('EXAMPLE ERROR 1')),
-      );
-      const r2 = error(new BaseError('EXAMPLE ERROR 2'));
+    it("Should unwrap and throw", () => {
+      const r = returnsAErrorResult();
 
-      const r = r2.andTry(r1);
-
-      expect(r.isErr()).toBeTruthy();
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors.length,
-      ).toBe(2);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[0],
-      ).toBeInstanceOf(BaseError);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[1],
-      ).toBeInstanceOf(CustomError);
-      expect(() => r.unwrap()).toThrow(CompositeError);
+      expect(() => r.unwrap()).toThrow();
     });
 
-    it('Should merge in Error', () => {
-      class CustomError extends Error {}
-      const r1 = error(
-        new CompositeError(new CustomError('EXAMPLE ERROR 1')),
-      );
-      const r2 = error(
-        new CompositeError(new BaseError('EXAMPLE ERROR 2')),
-      );
+    it("Should unwrap and throw", () => {
+      const r = returnsAErrorResult();
 
-      const r = r1.andTry(r2);
+      expect(r.unwrapOr(2)).toBe(2);
+    });
 
-      expect(r.isErr()).toBeTruthy();
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors.length,
-      ).toBe(2);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[0],
-      ).toBeInstanceOf(CustomError);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[1],
-      ).toBeInstanceOf(BaseError);
-      expect(() => r.unwrap()).toThrow(CompositeError);
+    it("Should unwrapOrElse correctly", () => {
+      const r = returnsAErrorResult();
+
+      expect(r.unwrapOrElse((err) => 2)).toBe(2);
+    });
+
+    it("Should map correctly", () => {
+      const r = returnsAErrorResult();
+
+      expect(() => r.map((val) => val + 1).unwrap()).toThrow(CustomError);
+    });
+
+    it("Should mapErr correctly", () => {
+      const r = returnsAErrorResult();
+
+      expect(() =>
+        r.mapErr((err) => new Error(err.message + "New error")).unwrap()
+      ).toThrow();
     });
   });
 });
