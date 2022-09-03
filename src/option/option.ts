@@ -17,7 +17,7 @@ export interface Optionable<T> {
 // The Option<T> type is a superposition of SomeOption and a Optionable<never> (that has no value)
 export type Option<T> = Some<T> | None<T>;
 
-class Some<T> implements Optionable<T> {
+export class Some<T> implements Optionable<T> {
   constructor(private value: T) {}
 
   isSome(): this is Some<T> {
@@ -58,7 +58,7 @@ class Some<T> implements Optionable<T> {
   }
 }
 
-class None<T> implements Optionable<T> {
+export class None<T> implements Optionable<T> {
   isSome(): this is Some<never> {
     return false;
   }

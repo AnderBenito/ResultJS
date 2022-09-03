@@ -1,1 +1,1 @@
-export { Option, none, optionFrom, some } from "./option";
+export { Option, none, optionFrom, some, None, Some } from "./option";
