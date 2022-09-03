@@ -1,0 +1,24 @@
+{
+  "name": "resultjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.36.1",
+    "@typescript-eslint/parser": "^5.36.1",
+    "eslint": "^8.23.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.2.1 ",
+    "jest": "^28.0.1",
+    "jest-junit": "^13.2.0",
+    "prettier": "^2.3.2",
+    "ts-jest": "^28.0.8"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
