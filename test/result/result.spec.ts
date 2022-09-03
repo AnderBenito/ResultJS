@@ -31,7 +31,7 @@ describe("Result test", () => {
     it("Should unwrapOrElse correctly", () => {
       const r = returnsAOKResult();
 
-      expect(r.unwrapOrElse((err) => 2)).toBe(10);
+      expect(r.unwrapOrElse(() => 2)).toBe(10);
     });
 
     it("Should map correctly", () => {
@@ -80,7 +80,7 @@ describe("Result test", () => {
     it("Should unwrapOrElse correctly", () => {
       const r = returnsAErrorResult();
 
-      expect(r.unwrapOrElse((err) => 2)).toBe(2);
+      expect(r.unwrapOrElse(() => 2)).toBe(2);
     });
 
     it("Should map correctly", () => {

@@ -30,10 +30,10 @@ describe("Result test", () => {
       const r = r1.andTry(r2);
 
       expect(r.isErr()).toBeTruthy();
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors.length
-      ).toBe(1);
-      expect(() => r.unwrap()).toThrow(CompositeError);
+      if (r.isErr()) {
+        expect((r.getErr() as CompositeError<Error[]>).errors.length).toBe(1);
+        expect(() => r.unwrap()).toThrow(CompositeError);
+      }
     });
 
     it("Should merge in Error", () => {
@@ -54,16 +54,17 @@ describe("Result test", () => {
       const r = r1.andTry(r2);
 
       expect(r.isErr()).toBeTruthy();
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors.length
-      ).toBe(2);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[0]
-      ).toBeInstanceOf(CustomError);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[1]
-      ).toBeInstanceOf(BaseError);
-      expect(() => r.unwrap()).toThrow(CompositeError);
+
+      if (r.isErr()) {
+        expect((r.getErr() as CompositeError<Error[]>).errors.length).toBe(2);
+        expect(
+          (r.getErr() as CompositeError<Error[]>).errors[0]
+        ).toBeInstanceOf(CustomError);
+        expect(
+          (r.getErr() as CompositeError<Error[]>).errors[1]
+        ).toBeInstanceOf(BaseError);
+        expect(() => r.unwrap()).toThrow(CompositeError);
+      }
     });
 
     it("Should merge in Error", () => {
@@ -74,16 +75,16 @@ describe("Result test", () => {
       const r = r2.andTry(r1);
 
       expect(r.isErr()).toBeTruthy();
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors.length
-      ).toBe(2);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[0]
-      ).toBeInstanceOf(BaseError);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[1]
-      ).toBeInstanceOf(CustomError);
-      expect(() => r.unwrap()).toThrow(CompositeError);
+      if (r.isErr()) {
+        expect((r.getErr() as CompositeError<Error[]>).errors.length).toBe(2);
+        expect(
+          (r.getErr() as CompositeError<Error[]>).errors[0]
+        ).toBeInstanceOf(BaseError);
+        expect(
+          (r.getErr() as CompositeError<Error[]>).errors[1]
+        ).toBeInstanceOf(CustomError);
+        expect(() => r.unwrap()).toThrow(CompositeError);
+      }
     });
 
     it("Should merge in Error", () => {
@@ -94,16 +95,17 @@ describe("Result test", () => {
       const r = r1.andTry(r2);
 
       expect(r.isErr()).toBeTruthy();
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors.length
-      ).toBe(2);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[0]
-      ).toBeInstanceOf(CustomError);
-      expect(
-        ((r as any).data.err as CompositeError<Error[]>).errors[1]
-      ).toBeInstanceOf(BaseError);
-      expect(() => r.unwrap()).toThrow(CompositeError);
+
+      if (r.isErr()) {
+        expect((r.getErr() as CompositeError<Error[]>).errors.length).toBe(2);
+        expect(
+          (r.getErr() as CompositeError<Error[]>).errors[0]
+        ).toBeInstanceOf(CustomError);
+        expect(
+          (r.getErr() as CompositeError<Error[]>).errors[1]
+        ).toBeInstanceOf(BaseError);
+        expect(() => r.unwrap()).toThrow(CompositeError);
+      }
     });
   });
 });

@@ -1,8 +1,8 @@
 import { error, ok, Result } from "../result";
 
 export interface Optionable<T> {
-  isSome(): this is SomeOption<T>;
-  isNone(): this is NoneOption<T>;
+  isSome(): this is Some<T>;
+  isNone(): this is None<T>;
   expect(msg: string): T;
   unwrap(): T;
   unwrapOr(val: T): T;
@@ -14,87 +14,88 @@ export interface Optionable<T> {
   zip<U>(other: Option<U>): Option<[T, U]>;
 }
 
-export interface SomeOption<T> extends Optionable<T> {
-  getValue(): T;
-}
-
-export type NoneOption<T> = Optionable<T> & { __typename: "None" };
-
 // The Option<T> type is a superposition of SomeOption and a Optionable<never> (that has no value)
-export type Option<T> = SomeOption<T> | NoneOption<T>;
+export type Option<T> = Some<T> | None<T>;
 
-class _Option<T> implements Optionable<T> {
-  constructor(public readonly val?: T) {}
+class Some<T> implements Optionable<T> {
+  constructor(private value: T) {}
 
-  public isSome(): this is SomeOption<T> {
-    return hasValue(this.val);
+  isSome(): this is Some<T> {
+    return true;
   }
-
-  public isNone(): this is NoneOption<never> {
+  isNone(): this is None<T> {
     return !this.isSome();
   }
-
-  public expect(msg: string): T {
-    if (!hasValue(this.val)) throw Error(msg);
-    return this.val;
+  expect(): T {
+    return this.value;
   }
-
-  public unwrap(): T {
-    if (!hasValue(this.val)) throw Error(`Optional has no value`);
-    return this.val;
+  unwrap(): T {
+    return this.value;
   }
-
-  public unwrapOr(val: T): T {
-    if (!hasValue(this.val)) return val;
-    return this.val;
+  unwrapOr(): T {
+    return this.value;
   }
-
-  public unwrapOrElse(f: () => T): T {
-    if (!hasValue(this.val)) return f();
-    return this.val;
+  unwrapOrElse(): T {
+    return this.value;
   }
-
-  public unwrapOrUndefined(): T | undefined {
-    return this.val;
+  unwrapOrUndefined(): T {
+    return this.value;
   }
-
-  public okOr<E extends Error>(err: E): Result<T, E> {
-    if (hasValue(this.val)) return ok(this.val);
-    return error(err);
+  okOr<E extends Error>(): Result<T, E> {
+    return ok(this.value);
   }
-
-  public map<U>(f: (val: T) => U): Option<U> {
-    if (hasValue(this.val)) return some(f(this.val));
-    return none;
+  map<U>(f: (val: T) => U): Option<U> {
+    return some(f(this.value));
   }
-
-  public filter(f: (val: T) => boolean): Option<T> {
-    if (this.isSome()) return f(this.val) === true ? this : none;
-    return none;
+  filter(f: (val: T) => boolean): Option<T> {
+    if (f(this.value)) return this;
   }
-
-  public zip<U>(other: Option<U>): Option<[T, U]> {
-    if (hasValue(this.val) && other.isSome())
-      return some([this.val, other.unwrap()]);
-    return none;
-  }
-}
-
-class _SomeOption<T> extends _Option<T> implements SomeOption<T> {
-  constructor(private value: T) {
-    super(value);
+  zip<U>(other: Option<U>): Option<[T, U]> {
+    if (other.isSome()) return some([this.value, other.getValue()]);
   }
   getValue(): T {
     return this.value;
   }
 }
 
-class _NoneOption<T> extends _Option<T> implements NoneOption<T> {
-  __typename: "None";
+class None<T> implements Optionable<T> {
+  isSome(): this is Some<never> {
+    return false;
+  }
+  isNone(): this is None<T> {
+    return !this.isSome();
+  }
+  expect(msg: string): never {
+    throw new Error(msg);
+  }
+  unwrap(): never {
+    throw new Error("Cannot get value of None");
+  }
+  unwrapOr(val: T): T {
+    return val;
+  }
+  unwrapOrElse(f: () => T): T {
+    return f();
+  }
+  unwrapOrUndefined(): undefined {
+    return undefined;
+  }
+  okOr<E extends Error>(err: E): Result<T, E> {
+    return error(err);
+  }
+  map<U>(): Option<U> {
+    return none;
+  }
+  filter(): Option<T> {
+    return none;
+  }
+  zip<U>(): Option<[T, U]> {
+    return none;
+  }
 }
 
-export const some = <T>(val: T): Option<T> => new _SomeOption(val);
-export const none: Option<never> = new _NoneOption<never>();
+export const some = <T>(val: T): Option<T> => new Some(val);
+export const none: Option<never> = new None<never>();
 export const optionFrom = <T>(val?: T): Option<T> =>
   hasValue(val) ? some(val) : none;
 

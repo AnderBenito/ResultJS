@@ -1,4 +1,4 @@
-import { some, none, Option, ok } from "../../src";
+import { some, none, Option } from "../../src";
 
 describe("Options test", () => {
   describe("Test Some options", () => {
@@ -39,7 +39,8 @@ describe("Options test", () => {
       const zipped = r.zip(some([2, 2]));
 
       expect(zipped.unwrap()[0]).toBe(10);
-      expect(zipped.unwrap()[1]).toBe(10);
+      expect(zipped.unwrap()[1][0]).toBe(2);
+      expect(zipped.unwrap()[1][1]).toBe(2);
     });
   });
 
