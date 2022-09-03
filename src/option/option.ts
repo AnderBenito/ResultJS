@@ -83,13 +83,13 @@ export class None<T> implements Optionable<T> {
   okOr<E extends Error>(err: E): Result<T, E> {
     return error(err);
   }
-  map<U>(): Option<U> {
+  map(): Option<never> {
     return none;
   }
-  filter(): Option<T> {
+  filter(): Option<never> {
     return none;
   }
-  zip<U>(): Option<[T, U]> {
+  zip(): Option<never> {
     return none;
   }
 }

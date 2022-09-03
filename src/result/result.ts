@@ -102,10 +102,10 @@ export class Errored<T, E extends Error> implements Resultable<T, E> {
   unwrapOrElse(f: (err: E) => T): T {
     return f(this.err);
   }
-  map<U>(): Result<U, E> {
+  map(): Result<never, E> {
     return error(this.err);
   }
-  mapErr<Eo extends Error>(f: (err: E) => Eo): Result<T, Eo> {
+  mapErr<Eo extends Error>(f: (err: E) => Eo): Result<never, Eo> {
     return error(f(this.err));
   }
   andTry<U, Eo extends Error>(
