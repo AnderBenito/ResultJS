@@ -196,3 +196,25 @@ export const allOptions = <T extends Option<any>[]>(
 
   return some(okResults);
 };
+
+/**
+ * Evaluates a set of `Option`s.
+ * Returns a `Some` with the first evaluated `Some`value.
+ *
+ * Returns `None` if no `Some` values are found.
+ */
+export const anyOptions = <T extends Option<any>[]>(
+  ...options: T
+): Option<{ [key in keyof T]: ExtractValue<T[key]> }[number]> => {
+  for (const option of options) {
+    if (option.isSome()) {
+      return option;
+    }
+  }
+
+  return none;
+};
+
+export const isOption = <T>(opt: unknown): opt is Option<T> => {
+  return opt instanceof None || opt instanceof Some;
+};
