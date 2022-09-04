@@ -18,38 +18,29 @@ export interface Resultable<T, E extends Error = Error> {
    */
   isErr(): this is Err<T, E>;
   /**
-   * Returns the contained value if it's an `Ok`type
-   * If the result is an `Err` throws the contained error
+   * Extract the contained value in `Result<T, E>` when is `Ok(t)`
    *
-   * Explicit error handling is prefered with isErr() narrowing
+   * If is `Err(err)` throws err
    */
   unwrap(): T;
   /**
-   * Returns the contained value if it's an `Ok`type
-   * If the result is an `Err` returns the provided `val` value
+   * Extract the contained value in `Result<T, E>` when is `Ok(t)`
    *
-   * @param val the value to return in case of `Err`
+   * If is `Err(err)` returns the provided default value `val`
    */
   unwrapOr(val: T): T;
   /**
-   * Returns the contained value if it's an `Ok`type
-   * If the result is an `Err` returns the function `f` return value
+   * Extract the contained value in `Result<T, E>` when is `Some`
    *
-   * @param f the function to evaluate in case of `Err`
+   * If is `Err(err)` returns the result of evaluating the provided function `f`
    */
   unwrapOrElse(f: (err: E) => T): T;
   /**
-   * Maps a `Result<T, E>` to `Result<U, E>` by applying a function to a contained `Ok` value,
-   * leaving an `Err` value untouched.
-   *
-   * This function can be used to compose the results of two functions.
+   * Transforms `Result<T, E>` to `Result<U, E>` by applying the provided function `f` to the contained value of `Ok(t)` and leaving `Err` values unchanged
    */
   map<U>(f: (val: T) => U): Result<U, E>;
   /**
-   * Maps a `Result<T, E>` to `Result<T, F>` by applying a function to a contained `Err` value,
-   * leaving an `Ok` value untouched.
-   *
-   * This function can be used to pass through a successful result while handling an error.
+   * Transforms `Result<T, E>` to `Result<T, F>` by applying the provided function `f` to the contained value of `Err(err)` and leaving `Ok` values unchanged
    */
   mapErr<F extends Error>(f: (err: E) => F): Result<T, F>;
   /**
