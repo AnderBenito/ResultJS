@@ -5,6 +5,9 @@ describe("Options test", () => {
     function returnsASomeOption(): Option<number> {
       return some(10);
     }
+    function returnsASomeOption2(): Option<Option<number>> {
+      return some(some(10));
+    }
 
     it("Should work", () => {
       const r = returnsASomeOption();
@@ -41,6 +44,14 @@ describe("Options test", () => {
       expect(zipped.unwrap()[0]).toBe(10);
       expect(zipped.unwrap()[1][0]).toBe(2);
       expect(zipped.unwrap()[1][1]).toBe(2);
+    });
+
+    it("Should flatten", () => {
+      const r = returnsASomeOption2();
+
+      const flattened = r.flatten();
+
+      expect(flattened.unwrap()).toBe(10);
     });
   });
 

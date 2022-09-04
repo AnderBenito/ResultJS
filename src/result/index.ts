@@ -1,12 +1,13 @@
 export {
   Result,
+  ExtractError,
+  ExtractResult,
+  Err,
+  Ok,
   error,
   ok,
   tryAll,
-  ExtractError,
-  ExtractResult,
-  Errored,
-  Ok,
+  all,
+  tryAny,
 } from "./result";
 export * from "./utils";
-export * from "./types";

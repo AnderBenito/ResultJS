@@ -43,9 +43,8 @@ const mySqr = getSquareRoot(4)
 
 if(mySqr.isOk()){
   // TS Compiler narrows value
-  // and getValue() is available to get the wrapped value
-  // Prints: 2
-  console.log(mySqr.getValue())
+  // getValue() is available to get the wrapped value
+  console.log(mySqr.getValue()) // Prints: 2
 } else {
   // Otherwise getErr() is available to get the wrapped error
   const error = mySqr.getErr()
@@ -58,10 +57,12 @@ if(mySqr.isOk()){
 Another solution is to use the `unwrap()` method, wich if it is an Ok Result returns the value or in case of an Error Result throws the error as a traditional exception.
 
 ```ts
-const mySqr = getSquareRoot(4)
+const okResult = getSquareRoot(4)
+const errorResult = getSquareRoot(-2)
 
-// Prints: 2
-console.log(mySqr.unwrap())
+console.log(okResult.unwrap()) // Prints: 2
+
+console.log(errorResult.unwrap()) // Throws exception
 ```
 
 ### Custom error types

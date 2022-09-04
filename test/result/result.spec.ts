@@ -16,6 +16,7 @@ describe("Result test", () => {
         r.getErr();
       }
     });
+
     it("Should unwrap correctly", () => {
       const r = returnsAOKResult();
 
