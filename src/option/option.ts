@@ -1,5 +1,7 @@
 import { error, ok, Result } from "../result";
 
+export type ExtractValue<T> = T extends Optionable<infer U> ? U : never;
+
 export interface Optionable<T> {
   /**
    * Returns `true` if is an `Some` value
@@ -171,4 +173,26 @@ export const transposeOption = <T, E extends Error>(
   }
 
   return ok(none);
+};
+
+/**
+ * Evaluates a set of `Option`s.
+ * Returns a `Some` with all `Some` values if there is no `None`.
+ *
+ * Returns `None` with the first evaluated `None` result.
+ */
+export const allOptions = <T extends Option<any>[]>(
+  ...options: T
+): Option<{ [key in keyof T]: ExtractValue<T[key]> }> => {
+  const okResults = [] as { [key in keyof T]: ExtractValue<T[key]> };
+
+  for (const option of options) {
+    if (option.isSome()) {
+      okResults.push(option.getValue());
+    } else {
+      return option;
+    }
+  }
+
+  return some(okResults);
 };
