@@ -9,5 +9,6 @@ export {
   tryAllResults,
   allResults,
   anyResults,
+  transposeResult,
 } from "./result";
 export * from "./utils";
