@@ -1,4 +1,11 @@
-import { all, error, ok, Result, tryAll, tryAny } from "../../src";
+import {
+  allResults,
+  error,
+  ok,
+  Result,
+  tryAllResults,
+  anyResults,
+} from "../../src";
 
 class BaseError extends Error {}
 
@@ -8,7 +15,7 @@ describe("Result test", () => {
       const r1: Result<number, BaseError> = ok(1);
       const r2: Result<string[]> = ok(["hello"]);
 
-      const r = all(r1, r2);
+      const r = allResults(r1, r2);
 
       expect(r.isOk()).toBeTruthy();
       if (r.isOk()) {
@@ -23,7 +30,7 @@ describe("Result test", () => {
       const r1: Result<number, BaseError> = ok(1);
       const r2: Result<string[]> = error(new Error("2"));
 
-      const r = all(r1, r2);
+      const r = allResults(r1, r2);
 
       expect(r.isErr()).toBeTruthy();
       if (r.isErr()) {
@@ -36,7 +43,7 @@ describe("Result test", () => {
       const r1: Result<number> = error(new Error("1"));
       const r2: Result<string[]> = error(new Error("2"));
 
-      const r = all(r1, r2);
+      const r = allResults(r1, r2);
 
       expect(r.isErr()).toBeTruthy();
       if (r.isErr()) {
@@ -50,7 +57,7 @@ describe("Result test", () => {
       const r1: Result<number, BaseError> = ok(1);
       const r2: Result<string[]> = ok(["hello"]);
 
-      const r = tryAll(r1, r2);
+      const r = tryAllResults(r1, r2);
 
       expect(r.isOk()).toBeTruthy();
       if (r.isOk()) {
@@ -65,7 +72,7 @@ describe("Result test", () => {
       const r1: Result<number, BaseError> = ok(1);
       const r2: Result<string[]> = error(new Error("Error"));
 
-      const r = tryAll(r1, r2);
+      const r = tryAllResults(r1, r2);
 
       expect(r.isErr()).toBeTruthy();
       if (r.isErr()) {
@@ -78,7 +85,7 @@ describe("Result test", () => {
       const r1: Result<number> = error(new Error("Error"));
       const r2: Result<string[]> = error(new Error("Error"));
 
-      const r = tryAll(r1, r2);
+      const r = tryAllResults(r1, r2);
 
       expect(r.isErr()).toBeTruthy();
       if (r.isErr()) {
@@ -92,7 +99,7 @@ describe("Result test", () => {
       const r1: Result<number, BaseError> = ok(1);
       const r2: Result<string[]> = ok(["hello"]);
 
-      const r = tryAny(r1, r2);
+      const r = anyResults(r1, r2);
 
       expect(r.isOk()).toBeTruthy();
       if (r.isOk()) {
@@ -106,7 +113,7 @@ describe("Result test", () => {
       const r1: Result<number, BaseError> = ok(1);
       const r2: Result<string[]> = error(new Error("2"));
 
-      const r = tryAny(r1, r2);
+      const r = anyResults(r1, r2);
 
       expect(r.isOk()).toBeTruthy();
       if (r.isOk()) {
@@ -120,7 +127,7 @@ describe("Result test", () => {
       const r1: Result<string[]> = error(new Error("1"));
       const r2: Result<number, BaseError> = ok(2);
 
-      const r = tryAny(r1, r2);
+      const r = anyResults(r1, r2);
 
       expect(r.isOk()).toBeTruthy();
       if (r.isOk()) {
@@ -134,7 +141,7 @@ describe("Result test", () => {
       const r1: Result<number> = error(new Error("1"));
       const r2: Result<string[]> = error(new Error("2"));
 
-      const r = tryAny(r1, r2);
+      const r = anyResults(r1, r2);
 
       expect(r.isErr()).toBeTruthy();
       if (r.isErr()) {
@@ -144,109 +151,3 @@ describe("Result test", () => {
     });
   });
 });
-
-// describe("Merging and combining", () => {
-//   it("Should merge in OK", () => {
-//     const r1: Result<number> = ok(1);
-//     const r2: Result<string[]> = ok(["true"]);
-
-//     const r = r1.andTry(r2);
-
-//     expect(r.isErr()).toBeFalsy();
-//   });
-
-//   it("Should merge in Error", () => {
-//     const r1 = ok(1);
-//     const r2 = error(new BaseError("EXAMPLE ERROR"));
-
-//     const r = r1.andTry(r2);
-
-//     expect(r.isErr()).toBeTruthy();
-//     expect(() => r.unwrap()).toThrow(CompositeError);
-//   });
-
-//   it("Should merge in Error", () => {
-//     const r1 = ok(1);
-//     const r2 = error(new CompositeError(new BaseError("EXAMPLE ERROR")));
-
-//     const r = r1.andTry(r2);
-
-//     expect(r.isErr()).toBeTruthy();
-//     if (r.isErr()) {
-//       expect((r.getErr() as CompositeError<Error[]>).errors.length).toBe(1);
-//       expect(() => r.unwrap()).toThrow(CompositeError);
-//     }
-//   });
-
-//   it("Should merge in Error", () => {
-//     const r1 = ok(1);
-//     const r2 = error(new BaseError("EXAMPLE ERROR"));
-
-//     const r = r2.andTry(r1);
-
-//     expect(r.isErr()).toBeTruthy();
-//     expect(() => r.unwrap()).toThrow(CompositeError);
-//   });
-
-//   it("Should merge in Error", () => {
-//     class CustomError extends Error {}
-//     const r1 = error(new CustomError("EXAMPLE ERROR 1"));
-//     const r2 = error(new BaseError("EXAMPLE ERROR 2"));
-
-//     const r = r1.andTry(r2);
-
-//     expect(r.isErr()).toBeTruthy();
-
-//     if (r.isErr()) {
-//       expect((r.getErr() as CompositeError<Error[]>).errors.length).toBe(2);
-//       expect(
-//         (r.getErr() as CompositeError<Error[]>).errors[0]
-//       ).toBeInstanceOf(CustomError);
-//       expect(
-//         (r.getErr() as CompositeError<Error[]>).errors[1]
-//       ).toBeInstanceOf(BaseError);
-//       expect(() => r.unwrap()).toThrow(CompositeError);
-//     }
-//   });
-
-//   it("Should merge in Error", () => {
-//     class CustomError extends Error {}
-//     const r1 = error(new CompositeError(new CustomError("EXAMPLE ERROR 1")));
-//     const r2 = error(new BaseError("EXAMPLE ERROR 2"));
-
-//     const r = r2.andTry(r1);
-
-//     expect(r.isErr()).toBeTruthy();
-//     if (r.isErr()) {
-//       expect((r.getErr() as CompositeError<Error[]>).errors.length).toBe(2);
-//       expect(
-//         (r.getErr() as CompositeError<Error[]>).errors[0]
-//       ).toBeInstanceOf(BaseError);
-//       expect(
-//         (r.getErr() as CompositeError<Error[]>).errors[1]
-//       ).toBeInstanceOf(CustomError);
-//       expect(() => r.unwrap()).toThrow(CompositeError);
-//     }
-//   });
-
-//   it("Should merge in Error", () => {
-//     class CustomError extends Error {}
-//     const r1 = error(new CompositeError(new CustomError("EXAMPLE ERROR 1")));
-//     const r2 = error(new CompositeError(new BaseError("EXAMPLE ERROR 2")));
-
-//     const r = r1.andTry(r2);
-
-//     expect(r.isErr()).toBeTruthy();
-
-//     if (r.isErr()) {
-//       expect((r.getErr() as CompositeError<Error[]>).errors.length).toBe(2);
-//       expect(
-//         (r.getErr() as CompositeError<Error[]>).errors[0]
-//       ).toBeInstanceOf(CustomError);
-//       expect(
-//         (r.getErr() as CompositeError<Error[]>).errors[1]
-//       ).toBeInstanceOf(BaseError);
-//       expect(() => r.unwrap()).toThrow(CompositeError);
-//     }
-//   });
-// });

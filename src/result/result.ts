@@ -144,7 +144,7 @@ export const error = <E extends Error>(err: E): Result<never, E> =>
  * If errors are found, returns a `CombinedError` with all of them.
  * If all values are `Ok`, returns a `CombinedResult` with all `Ok` values
  */
-export const tryAll = <T extends Result<any, any>[]>(
+export const tryAllResults = <T extends Result<any, any>[]>(
   ...results: T
 ): Result<
   { [I in keyof T]: ExtractResult<T[I]> },
@@ -176,7 +176,7 @@ export const tryAll = <T extends Result<any, any>[]>(
  *
  * Returns `Error` with the first evaluated error result.
  */
-export const all = <T extends Result<any, any>[]>(
+export const allResults = <T extends Result<any, any>[]>(
   ...results: T
 ): Result<
   { [I in keyof T]: ExtractResult<T[I]> },
@@ -200,7 +200,7 @@ export const all = <T extends Result<any, any>[]>(
  * Returns an `Ok` with the first result evaluated is `Ok`
  * If no `Ok` is found, returns an `Error` containing the collected error values
  */
-export const tryAny = <T extends Result<any, any>[]>(
+export const anyResults = <T extends Result<any, any>[]>(
   ...results: T
 ): Result<
   { [I in keyof T]: ExtractResult<T[I]> }[number],

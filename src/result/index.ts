@@ -6,8 +6,8 @@ export {
   Ok,
   error,
   ok,
-  tryAll,
-  all,
-  tryAny,
+  tryAllResults,
+  allResults,
+  anyResults,
 } from "./result";
 export * from "./utils";
