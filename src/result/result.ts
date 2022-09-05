@@ -1,8 +1,8 @@
 import { CompositeError } from "../CompositeError";
 import { none, Option, some } from "../option";
 
-export type ExtractResult<R> = R extends Resultable<infer T, any> ? T : never;
-export type ExtractError<R> = R extends Resultable<any, infer E>
+export type ExtractResult<R> = R extends Ok<infer T> ? T : never;
+export type ExtractError<R> = R extends Err<infer E>
   ? E extends Error
     ? E
     : never
@@ -12,11 +12,11 @@ export interface Resultable<T, E extends Error = Error> {
   /**
    * Returns `true` if is an `Ok` value
    */
-  isOk(): this is Ok<T, E>;
+  isOk(): this is Ok<T>;
   /**
    * Returns `true` if is an `Err` value
    */
-  isErr(): this is Err<T, E>;
+  isErr(): this is Err<E>;
   /**
    * Extract the contained value in `Result<T, E>` when is `Ok(t)`
    *
@@ -53,16 +53,16 @@ export interface Resultable<T, E extends Error = Error> {
   ok(): Option<T>;
 }
 
-export type Result<T, E extends Error = Error> = Ok<T, E> | Err<T, E>;
+export type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
 
-export class Ok<T, E extends Error> implements Resultable<T, E> {
+export class Ok<T> implements Resultable<T, never> {
   constructor(private val: T) {}
 
-  isOk(): this is Ok<T, E> {
+  isOk(): this is Ok<T> {
     return true;
   }
-  isErr(): this is Err<T, E> {
-    return !this.isOk();
+  isErr(): false {
+    return false;
   }
   unwrap(): T {
     return this.val;
@@ -73,7 +73,7 @@ export class Ok<T, E extends Error> implements Resultable<T, E> {
   unwrapOrElse(): T {
     return this.val;
   }
-  map<U>(f: (val: T) => U): Result<U, E> {
+  map<U, E extends Error>(f: (val: T) => U): Result<U, E> {
     return ok(f(this.val));
   }
   mapErr<F extends Error>(): Result<T, F> {
@@ -90,22 +90,22 @@ export class Ok<T, E extends Error> implements Resultable<T, E> {
   }
 }
 
-export class Err<T, E extends Error> implements Resultable<T, E> {
+export class Err<E extends Error> implements Resultable<never, E> {
   constructor(private error: E) {}
 
-  isOk(): this is Ok<T, E> {
+  isOk(): false {
     return false;
   }
-  isErr(): this is Err<T, E> {
+  isErr(): this is Err<E> {
     return !this.isOk();
   }
   unwrap(): never {
     throw this.error;
   }
-  unwrapOr(val: T): T {
+  unwrapOr<T>(val: T): T {
     return val;
   }
-  unwrapOrElse(f: (err: E) => T): T {
+  unwrapOrElse<T>(f: (err: E) => T): T {
     return f(this.error);
   }
   map(): Result<never, E> {
@@ -127,7 +127,7 @@ export class Err<T, E extends Error> implements Resultable<T, E> {
 
 export const ok = <T>(val: T): Result<T, never> => new Ok(val);
 export const error = <E extends Error>(err: E): Result<never, E> =>
-  new Err<never, E>(err);
+  new Err<E>(err);
 
 /**
  * Evaluates a set of `Result`s
