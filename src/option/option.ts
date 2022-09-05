@@ -66,6 +66,7 @@ export interface Optionable<T> {
 }
 
 // The Option<T> type is a superposition of SomeOption and a Optionable<never> (that has no value)
+export type Optional<T> = T | undefined | null;
 export type Option<T> = Some<T> | None<T>;
 
 export class Some<T> implements Optionable<T> {
@@ -99,13 +100,15 @@ export class Some<T> implements Optionable<T> {
     return some(f(this.value));
   }
   filter(f: (val: T) => boolean): Option<T> {
-    if (f(this.value)) return this;
+    if (f(this.value) === true) return this;
+    return none;
   }
   zip<U>(other: Option<U>): Option<[T, U]> {
     if (other.isSome()) return some([this.value, other.getValue()]);
+    return none;
   }
   flatten(): Option<T extends Option<infer U> ? U : T> {
-    if (this.value instanceof Some) {
+    if (isOption<T extends Option<infer U> ? U : T>(this.value)) {
       if (this.value.isNone()) return none;
       return some(this.value.getValue());
     }
