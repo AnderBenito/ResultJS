@@ -6,10 +6,6 @@ describe("Options test", () => {
     return some(SOME_VALUE);
   }
   describe("Test Some options", () => {
-    function returnsSomeValue2(): Option<Option<number>> {
-      return some(some(10));
-    }
-
     it("unwrap should return", () => {
       const r = returnsSomeValue();
 
