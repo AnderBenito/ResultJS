@@ -1,101 +1,178 @@
-import { error, ok, Result } from "../../src";
+import {
+  error,
+  none,
+  ok,
+  Option,
+  Result,
+  some,
+  transposeResult,
+} from "../../src";
 
 describe("Result test", () => {
+  const OK_VALUE = 10;
+  function returnsOk(): Result<number> {
+    return ok(OK_VALUE);
+  }
   describe("Test OK Result", () => {
-    function returnsAOKResult(): Result<number> {
-      return ok(10);
-    }
+    it("isOk should be true", () => {
+      const r = returnsOk();
+
+      expect(r.isOk()).toBeTruthy();
+    });
 
     it("Should narrow the result", () => {
-      const r = returnsAOKResult();
+      const r = returnsOk();
 
       if (r.isOk()) {
-        expect(r.getValue()).toBe(10);
+        expect(r.getValue()).toBe(OK_VALUE);
       } else {
         r.unwrap();
         r.getErr();
       }
     });
 
-    it("Should unwrap correctly", () => {
-      const r = returnsAOKResult();
+    it("unwrap should return Ok value", () => {
+      const r = returnsOk();
 
-      expect(r.unwrap()).toBe(10);
+      expect(r.unwrap()).toBe(OK_VALUE);
     });
 
-    it("Should unwrap or correctly", () => {
-      const r = returnsAOKResult();
+    it("unwrapOr should return Ok value", () => {
+      const r = returnsOk();
 
-      expect(r.unwrapOr(3)).toBe(10);
+      expect(r.unwrapOr(3)).toBe(OK_VALUE);
     });
 
-    it("Should unwrapOrElse correctly", () => {
-      const r = returnsAOKResult();
+    it("unwrapOrElse should return Ok value", () => {
+      const r = returnsOk();
 
-      expect(r.unwrapOrElse(() => 2)).toBe(10);
+      expect(r.unwrapOrElse(() => 2)).toBe(OK_VALUE);
     });
 
-    it("Should map correctly", () => {
-      const r = returnsAOKResult();
+    it("map should apply transform function", () => {
+      const r = returnsOk();
 
-      expect(r.map((val) => val + 1).unwrap()).toBe(11);
+      expect(r.map((val) => val + 1).unwrap()).toBe(OK_VALUE + 1);
     });
 
-    it("Should mapErr correctly", () => {
-      const r = returnsAOKResult();
+    it("mapErr should keep Ok unchanged", () => {
+      const r = returnsOk();
 
       expect(
         r.mapErr((err) => new Error(err.message + "New error")).unwrap()
-      ).toBe(10);
+      ).toBe(OK_VALUE);
+    });
+
+    it("ok() should transform to Some<T>", () => {
+      const r = returnsOk();
+
+      expect(r.ok().isSome()).toBeTruthy();
+    });
+
+    it("err() should transform to None", () => {
+      const r = returnsOk();
+
+      expect(r.err().isNone()).toBeTruthy();
+    });
+
+    it("transposeResult() should transform to Some(Ok(_))", () => {
+      const r: Result<Option<number>> = ok(some(OK_VALUE));
+
+      const transposed = transposeResult(r);
+
+      expect(transposed.isSome()).toBeTruthy();
+      expect(transposed.unwrap().isOk()).toBeTruthy();
+      expect(transposed.unwrap().unwrap()).toBe(OK_VALUE);
+    });
+
+    it("transposeResult() should transform to None", () => {
+      const r: Result<Option<number>> = ok(none);
+
+      const transposed = transposeResult(r);
+
+      expect(transposed.isNone()).toBeTruthy();
     });
   });
 
   describe("Test Error Result", () => {
     class CustomError extends Error {}
-    function returnsAErrorResult(): Result<number> {
-      return error(new CustomError("Invalid result"));
+    function returnsErr(): Result<number, CustomError> {
+      return error(new CustomError("Invalid Result"));
     }
 
-    it("Should narrow the result to err", () => {
-      const r = returnsAErrorResult();
+    it("isErr should be true", () => {
+      const r = returnsErr();
+
+      expect(r.isErr()).toBeTruthy();
+    });
+
+    it("Should narrow the result", () => {
+      const r = returnsErr();
 
       if (r.isErr()) {
-        expect(r.getErr().message).toBe("Invalid result");
+        expect(r.getErr()).toBeInstanceOf(CustomError);
       } else {
+        r.unwrap();
         r.getValue();
       }
     });
 
-    it("Should unwrap and throw", () => {
-      const r = returnsAErrorResult();
+    it("unwrap should throw Err", () => {
+      const r = returnsErr();
 
-      expect(() => r.unwrap()).toThrow();
+      expect(() => r.unwrap()).toThrow(CustomError);
     });
 
-    it("Should unwrap and throw", () => {
-      const r = returnsAErrorResult();
+    it("unwrapOr should return provided value", () => {
+      const r = returnsErr();
 
-      expect(r.unwrapOr(2)).toBe(2);
+      expect(r.unwrapOr(3)).toBe(3);
     });
 
-    it("Should unwrapOrElse correctly", () => {
-      const r = returnsAErrorResult();
+    it("unwrapOrElse should return function return value", () => {
+      const r = returnsErr();
 
       expect(r.unwrapOrElse(() => 2)).toBe(2);
     });
 
-    it("Should map correctly", () => {
-      const r = returnsAErrorResult();
+    it("map should keep unchanged and throw", () => {
+      const r = returnsErr();
 
       expect(() => r.map((val) => val + 1).unwrap()).toThrow(CustomError);
     });
 
-    it("Should mapErr correctly", () => {
-      const r = returnsAErrorResult();
+    it("mapErr should transform error", () => {
+      const r = returnsErr();
+      const newMessage = "HELLO";
 
-      expect(() =>
-        r.mapErr((err) => new Error(err.message + "New error")).unwrap()
-      ).toThrow();
+      const mapped = r.mapErr((err) => new Error(err.message + newMessage));
+
+      expect(mapped.isErr()).toBeTruthy();
+      if (mapped.isErr()) {
+        expect(mapped.getErr().message).toBe("Invalid Result" + newMessage);
+      }
+    });
+
+    it("ok() should transform to None", () => {
+      const r = returnsErr();
+
+      expect(r.ok().isNone()).toBeTruthy();
+    });
+
+    it("err() should transform to Some<E>", () => {
+      const r = returnsErr();
+
+      expect(r.err().isSome()).toBeTruthy();
+    });
+
+    it("transposeResult() should transform to Some(Ok(_))", () => {
+      const r: Result<Option<number>> = error(new Error());
+
+      const transposed = transposeResult(r as Result<Option<number>>);
+
+      expect(transposed.isSome()).toBeTruthy();
+      expect(transposed.unwrap().isErr()).toBeTruthy();
+      expect(() => transposed.unwrap().unwrap()).toThrow(Error);
     });
   });
 });

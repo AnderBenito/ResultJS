@@ -1,4 +1,4 @@
-import { error, ok, Result } from "../result";
+import { Err, error, Ok, ok, Result } from "../result";
 
 export type ExtractValue<T> = T extends Optionable<infer U> ? U : never;
 
@@ -93,10 +93,10 @@ export class Some<T> implements Optionable<T> {
   unwrapOrUndefined(): T {
     return this.value;
   }
-  okOr<E extends Error>(): Result<T, E> {
+  okOr(): Ok<T> {
     return ok(this.value);
   }
-  map<U>(f: (val: T) => U): Option<U> {
+  map<U>(f: (val: T) => U): Some<U> {
     return some(f(this.value));
   }
   filter(f: (val: T) => boolean): Option<T> {
@@ -104,7 +104,7 @@ export class Some<T> implements Optionable<T> {
     return none;
   }
   zip<U>(other: Option<U>): Option<[T, U]> {
-    if (other.isSome()) return some([this.value, other.getValue()]);
+    if (other.isSome()) return some<[T, U]>([this.value, other.getValue()]);
     return none;
   }
   flatten(): Option<T extends Option<infer U> ? U : T> {
@@ -141,25 +141,25 @@ export class None implements Optionable<never> {
   unwrapOrUndefined<T>(): T | undefined {
     return undefined;
   }
-  okOr<T, E extends Error>(err: E): Result<T, E> {
+  okOr<E extends Error>(err: E): Err<E> {
     return error(err);
   }
-  map(): Option<never> {
+  map(): None {
     return none;
   }
-  filter(): Option<never> {
+  filter(): None {
     return none;
   }
-  zip(): Option<never> {
+  zip(): None {
     return none;
   }
-  flatten<T>(): Option<T extends Option<infer U> ? U : T> {
+  flatten(): None {
     return none;
   }
 }
 
-export const some = <T>(val: T): Option<T> => new Some(val);
-export const none: Option<never> = new None();
+export const some = <T>(val: T): Some<T> => new Some(val);
+export const none: None = new None();
 export const optionFrom = <T>(val?: T): Option<T> =>
   hasValue(val) ? some(val) : none;
 

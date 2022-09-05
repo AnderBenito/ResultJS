@@ -1,5 +1,5 @@
 import { CompositeError } from "../CompositeError";
-import { none, Option, some } from "../option";
+import { None, none, Option, Some, some } from "../option";
 
 export type ExtractResult<R> = R extends Ok<infer T> ? T : never;
 export type ExtractError<R> = R extends Err<infer E>
@@ -73,19 +73,19 @@ export class Ok<T> implements Resultable<T, never> {
   unwrapOrElse(): T {
     return this.val;
   }
-  map<U, E extends Error>(f: (val: T) => U): Result<U, E> {
+  map<U>(f: (val: T) => U): Ok<U> {
     return ok(f(this.val));
   }
-  mapErr<F extends Error>(): Result<T, F> {
+  mapErr(): Ok<T> {
     return ok(this.val);
   }
   getValue(): T {
     return this.val;
   }
-  ok(): Option<T> {
+  ok(): Some<T> {
     return some(this.val);
   }
-  err(): Option<never> {
+  err(): None {
     return none;
   }
 }
@@ -108,26 +108,25 @@ export class Err<E extends Error> implements Resultable<never, E> {
   unwrapOrElse<T>(f: (err: E) => T): T {
     return f(this.error);
   }
-  map(): Result<never, E> {
+  map(): Err<E> {
     return error(this.error);
   }
-  mapErr<F extends Error>(f: (err: E) => F): Result<never, F> {
+  mapErr<F extends Error>(f: (err: E) => F): Err<F> {
     return error(f(this.error));
   }
   getErr(): E {
     return this.error;
   }
-  ok(): Option<never> {
+  ok(): None {
     return none;
   }
-  err(): Option<E> {
+  err(): Some<E> {
     return some(this.error);
   }
 }
 
-export const ok = <T>(val: T): Result<T, never> => new Ok(val);
-export const error = <E extends Error>(err: E): Result<never, E> =>
-  new Err<E>(err);
+export const ok = <T>(val: T): Ok<T> => new Ok(val);
+export const error = <E extends Error>(err: E): Err<E> => new Err<E>(err);
 
 /**
  * Evaluates a set of `Result`s
@@ -213,6 +212,11 @@ export const anyResults = <T extends Result<any, any>[]>(
   >;
 };
 
+/**
+ * Transforms a `Result` of an `Option` into an `Option` of a `Result`
+ *
+ * `Ok(None)` will be mapped to `None`. `Ok(Some(_))` and `Err(_)` will be mapped to `Some(Ok(_))` and `Some(Err(_))`
+ */
 export const transposeResult = <T, E extends Error>(
   result: Result<Option<T>, E>
 ): Option<Result<T, E>> => {
