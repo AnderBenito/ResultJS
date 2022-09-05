@@ -75,8 +75,8 @@ export class Some<T> implements Optionable<T> {
   isSome(): this is Some<T> {
     return true;
   }
-  isNone(): this is None {
-    return !this.isSome();
+  isNone(): false {
+    return false;
   }
   expect(): T {
     return this.value;
@@ -120,7 +120,7 @@ export class Some<T> implements Optionable<T> {
 }
 
 export class None implements Optionable<never> {
-  isSome(): this is Some<never> {
+  isSome(): false {
     return false;
   }
   isNone(): this is None {
