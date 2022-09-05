@@ -10,7 +10,7 @@ export interface Optionable<T> {
   /**
    * Returns `true` if is an `None` value
    */
-  isNone(): this is None<T>;
+  isNone(): this is None;
   /**
    * Extract the contained value in `Option<T>` when is `Some`
    *
@@ -67,7 +67,7 @@ export interface Optionable<T> {
 
 // The Option<T> type is a superposition of SomeOption and a Optionable<never> (that has no value)
 export type Optional<T> = T | undefined | null;
-export type Option<T> = Some<T> | None<T>;
+export type Option<T> = Some<T> | None;
 
 export class Some<T> implements Optionable<T> {
   constructor(private value: T) {}
@@ -75,7 +75,7 @@ export class Some<T> implements Optionable<T> {
   isSome(): this is Some<T> {
     return true;
   }
-  isNone(): this is None<T> {
+  isNone(): this is None {
     return !this.isSome();
   }
   expect(): T {
@@ -119,11 +119,11 @@ export class Some<T> implements Optionable<T> {
   }
 }
 
-export class None<T> implements Optionable<T> {
+export class None implements Optionable<never> {
   isSome(): this is Some<never> {
     return false;
   }
-  isNone(): this is None<T> {
+  isNone(): this is None {
     return !this.isSome();
   }
   expect(msg: string): never {
@@ -132,16 +132,16 @@ export class None<T> implements Optionable<T> {
   unwrap(): never {
     throw new Error("Cannot get value of None");
   }
-  unwrapOr(val: T): T {
+  unwrapOr<T>(val: T): T {
     return val;
   }
-  unwrapOrElse(f: () => T): T {
+  unwrapOrElse<T>(f: () => T): T {
     return f();
   }
-  unwrapOrUndefined(): undefined {
+  unwrapOrUndefined<T>(): T | undefined {
     return undefined;
   }
-  okOr<E extends Error>(err: E): Result<T, E> {
+  okOr<T, E extends Error>(err: E): Result<T, E> {
     return error(err);
   }
   map(): Option<never> {
@@ -153,13 +153,13 @@ export class None<T> implements Optionable<T> {
   zip(): Option<never> {
     return none;
   }
-  flatten(): Option<T extends Option<infer U> ? U : T> {
+  flatten<T>(): Option<T extends Option<infer U> ? U : T> {
     return none;
   }
 }
 
 export const some = <T>(val: T): Option<T> => new Some(val);
-export const none: Option<never> = new None<never>();
+export const none: Option<never> = new None();
 export const optionFrom = <T>(val?: T): Option<T> =>
   hasValue(val) ? some(val) : none;
 
