@@ -15,10 +15,11 @@ describe("Options test", () => {
     it("Should narrow", () => {
       const r = returnsSomeValue();
 
-      if (r.isNone()) {
-        r.unwrap();
-      } else {
+      expect(r.isSome()).toBeTruthy();
+      if (r.isSome()) {
         expect(r.getValue()).toBe(SOME_VALUE);
+      } else {
+        r.unwrap();
       }
     });
 
@@ -113,10 +114,11 @@ describe("Options test", () => {
     it("Should narrow", () => {
       const r = returnsNone();
 
-      if (r.isSome()) {
-        r.getValue();
+      expect(r.isNone()).toBeTruthy();
+      if (r.isNone()) {
+        r.unwrap();
       } else {
-        expect(r.isNone()).toBe(true);
+        r.getValue();
       }
     });
 
