@@ -1,6 +1,6 @@
 import { error, ok, Result } from "./result";
 
-export function wrap<T, E extends Error = Error>(cb: () => T): Result<T, E> {
+export function wrap<T, E>(cb: () => T): Result<T, E> {
   try {
     const result = cb();
 
@@ -10,7 +10,7 @@ export function wrap<T, E extends Error = Error>(cb: () => T): Result<T, E> {
   }
 }
 
-export async function wrapAsync<T, E extends Error = Error>(
+export async function wrapAsync<T, E>(
   cb: () => Promise<T>
 ): Promise<Result<T, E>> {
   try {

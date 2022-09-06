@@ -10,7 +10,7 @@ import {
 
 describe("Result test", () => {
   const OK_VALUE = 10;
-  function returnsOk(): Result<number> {
+  function returnsOk(): Result<number, Error> {
     return ok(OK_VALUE);
   }
   describe("Test OK Result", () => {
@@ -66,15 +66,15 @@ describe("Result test", () => {
     it("and() with Ok(y) should return Ok(y)", () => {
       const r = returnsOk();
 
-      const combined = r.and(ok(3) as Result<number>);
+      const combined = r.and(ok(3));
 
       expect(combined.unwrap()).toBe(3);
     });
 
     it("and() with Err(d) should return Err(d)", () => {
-      const r: Result<number> = returnsOk();
+      const r: Result<number, Error> = returnsOk();
 
-      const combined = r.and(error(new Error("2")) as Result<number>);
+      const combined = r.and(error(new Error("2")));
 
       expect(combined.isErr()).toBeTruthy();
       if (combined.isErr()) {
@@ -85,7 +85,7 @@ describe("Result test", () => {
     it("or() with Ok(y) should return Ok(x)", () => {
       const r = returnsOk();
 
-      const combined = r.or(ok(3) as Result<number>);
+      const combined = r.or(ok(3));
 
       expect(combined.unwrap()).toBe(OK_VALUE);
     });
@@ -93,7 +93,7 @@ describe("Result test", () => {
     it("or() with Err(e) should return Ok(x)", () => {
       const r = returnsOk();
 
-      const combined = r.or(ok(3) as Result<number>);
+      const combined = r.or(ok(3));
 
       expect(combined.unwrap()).toBe(OK_VALUE);
     });
@@ -111,7 +111,7 @@ describe("Result test", () => {
     });
 
     it("transposeResult() should transform to Some(Ok(_))", () => {
-      const r: Result<Option<number>> = ok(some(OK_VALUE));
+      const r: Result<Option<number>, Error> = ok(some(OK_VALUE));
 
       const transposed = transposeResult(r);
 
@@ -121,7 +121,7 @@ describe("Result test", () => {
     });
 
     it("transposeResult() should transform to None", () => {
-      const r: Result<Option<number>> = ok(none);
+      const r: Result<Option<number>, Error> = ok(none);
 
       const transposed = transposeResult(r);
 
@@ -191,7 +191,7 @@ describe("Result test", () => {
     it("and() with Ok(y) should return Err(e)", () => {
       const r = returnsErr();
 
-      const combined = r.and(ok(3) as Result<number>);
+      const combined = r.and(ok(3));
 
       expect(() => combined.unwrap()).toThrow(CustomError);
     });
@@ -199,7 +199,7 @@ describe("Result test", () => {
     it("and() with Err(d) should return Err(e)", () => {
       const r = returnsErr();
 
-      const combined = r.and(error(new Error("2")) as Result<number>);
+      const combined = r.and(error(new Error("2")));
 
       expect(combined.isErr()).toBeTruthy();
       if (combined.isErr()) {
@@ -210,7 +210,7 @@ describe("Result test", () => {
     it("or() with Ok(y) should return Ok(y)", () => {
       const r = returnsErr();
 
-      const combined = r.or(ok(3) as Result<number>);
+      const combined = r.or(ok(3));
 
       expect(combined.unwrap()).toBe(3);
     });
@@ -218,7 +218,7 @@ describe("Result test", () => {
     it("or() with Err(d) should return Err(d)", () => {
       const r = returnsErr();
 
-      const combined = r.or(error(new Error("2")) as Result<number>);
+      const combined = r.or(error(new Error("2")));
 
       expect(combined.isErr()).toBeTruthy();
       if (combined.isErr()) {
@@ -239,9 +239,9 @@ describe("Result test", () => {
     });
 
     it("transposeResult() should transform to Some(Ok(_))", () => {
-      const r: Result<Option<number>> = error(new Error());
+      const r: Result<Option<number>, Error> = error(new Error());
 
-      const transposed = transposeResult(r as Result<Option<number>>);
+      const transposed = transposeResult(r as Result<Option<number>, Error>);
 
       expect(transposed.isSome()).toBeTruthy();
       expect(transposed.unwrap().isErr()).toBeTruthy();

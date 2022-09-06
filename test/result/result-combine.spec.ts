@@ -13,7 +13,7 @@ describe("Result test", () => {
   describe("Test all", () => {
     it("Should all and return OK", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[]> = ok(["hello"]);
+      const r2: Result<string[], Error> = ok(["hello"]);
 
       const r = allResults(r1, r2);
 
@@ -28,7 +28,7 @@ describe("Result test", () => {
 
     it("Should all with Ok and Error and return Error", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[]> = error(new Error("2"));
+      const r2: Result<string[], Error> = error(new Error("2"));
 
       const r = allResults(r1, r2);
 
@@ -40,8 +40,8 @@ describe("Result test", () => {
     });
 
     it("Should all with Error and Error and return Error", () => {
-      const r1: Result<number> = error(new Error("1"));
-      const r2: Result<string[]> = error(new Error("2"));
+      const r1: Result<number, BaseError> = error(new BaseError("1"));
+      const r2: Result<string[], Error> = error(new Error("2"));
 
       const r = allResults(r1, r2);
 
@@ -55,7 +55,7 @@ describe("Result test", () => {
   describe("Test tryAll", () => {
     it("Should tryAll and return OK", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[]> = ok(["hello"]);
+      const r2: Result<string[], Error> = ok(["hello"]);
 
       const r = tryAllResults(r1, r2);
 
@@ -70,34 +70,42 @@ describe("Result test", () => {
 
     it("Should tryAll with Ok and Error and return Error", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[]> = error(new Error("Error"));
+      const r2: Result<string[], Error> = error(new Error("Error"));
 
       const r = tryAllResults(r1, r2);
 
       expect(r.isErr()).toBeTruthy();
       if (r.isErr()) {
         const err = r.getErr();
-        expect(err.errors.length).toBe(1);
+        const [a, b] = err;
+
+        expect(err.length).toBe(2);
+        expect(a.isNone()).toBeTruthy();
+        expect(b.isSome()).toBeTruthy();
       }
     });
 
     it("Should tryAll with Error and Error and return Error", () => {
-      const r1: Result<number> = error(new Error("Error"));
-      const r2: Result<string[]> = error(new Error("Error"));
+      const r1: Result<number, BaseError> = error(new BaseError("Error"));
+      const r2: Result<string[], Error> = error(new Error("Error"));
 
       const r = tryAllResults(r1, r2);
 
       expect(r.isErr()).toBeTruthy();
       if (r.isErr()) {
         const err = r.getErr();
-        expect(err.errors.length).toBe(2);
+        const [a, b] = err;
+
+        expect(err.length).toBe(2);
+        expect(a.isSome()).toBeTruthy();
+        expect(b.isSome()).toBeTruthy();
       }
     });
   });
   describe("Test tryAny", () => {
     it("Should tryAny and return OK", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[]> = ok(["hello"]);
+      const r2: Result<string[], Error> = ok(["hello"]);
 
       const r = anyResults(r1, r2);
 
@@ -111,7 +119,7 @@ describe("Result test", () => {
 
     it("Should tryAny with Ok and Error and return Ok", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[]> = error(new Error("2"));
+      const r2: Result<string[], Error> = error(new Error("2"));
 
       const r = anyResults(r1, r2);
 
@@ -124,7 +132,7 @@ describe("Result test", () => {
     });
 
     it("Should tryAny with Error and Ok and return Ok", () => {
-      const r1: Result<string[]> = error(new Error("1"));
+      const r1: Result<string[], Error> = error(new Error("1"));
       const r2: Result<number, BaseError> = ok(2);
 
       const r = anyResults(r1, r2);
@@ -138,15 +146,15 @@ describe("Result test", () => {
     });
 
     it("Should tryAny with Error and Error and return Error", () => {
-      const r1: Result<number> = error(new Error("1"));
-      const r2: Result<string[]> = error(new Error("2"));
+      const r1: Result<number, BaseError> = error(new BaseError("1"));
+      const r2: Result<string[], Error> = error(new Error("2"));
 
       const r = anyResults(r1, r2);
 
       expect(r.isErr()).toBeTruthy();
       if (r.isErr()) {
         const err = r.getErr();
-        expect(err.errors.length).toBe(2);
+        expect(err.length).toBe(2);
       }
     });
   });

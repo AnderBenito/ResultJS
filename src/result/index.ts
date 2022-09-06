@@ -1,7 +1,9 @@
 export {
   Result,
-  ExtractError,
-  ExtractResult,
+  ResultErrType,
+  ResultErrTypes,
+  ResultOkType,
+  ResultOkTypes,
   Err,
   Ok,
   error,

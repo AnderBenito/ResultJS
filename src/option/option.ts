@@ -52,7 +52,7 @@ export interface Optionable<T> {
    *
    * Transforms `Some(v)` to `Ok(v)`, and `None` to `Err(err)` using the provided default err value
    */
-  okOr<E extends Error>(err: E): Result<T, E>;
+  okOr<E>(err: E): Result<T, E>;
   /**
    * Transforms `Option<T>` to `Option<U>` by applying the provided function `f` to the contained value of `Some` and leaving `None` values unchanged
    */
@@ -188,7 +188,7 @@ export class None implements Optionable<never> {
   unwrapOrUndefined<T>(): T | undefined {
     return undefined;
   }
-  okOr<E extends Error>(err: E): Err<E> {
+  okOr<E>(err: E): Err<E> {
     return error(err);
   }
   map(): None {
@@ -222,7 +222,7 @@ export const optionFrom = <T>(val?: T): Option<T> =>
 
 const hasValue = <T>(val?: T): val is T => val !== undefined && val !== null;
 
-export const transposeOption = <T, E extends Error>(
+export const transposeOption = <T, E>(
   option: Option<Result<T, E>>
 ): Result<Option<T>, E> => {
   if (option.isSome()) {

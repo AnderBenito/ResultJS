@@ -1,14 +1,19 @@
-import { CompositeError } from "../CompositeError";
 import { None, none, Option, Some, some } from "../option";
 
-export type ExtractResult<R> = R extends Ok<infer T> ? T : never;
-export type ExtractError<R> = R extends Err<infer E>
-  ? E extends Error
-    ? E
-    : never
-  : never;
+export type ResultOkType<T> = T extends Ok<infer U> ? U : never;
+export type ResultOkTypes<T> = {
+  [key in keyof T]: T[key] extends Result<any, any>
+    ? ResultOkType<T[key]>
+    : never;
+};
+export type ResultErrType<E> = E extends Err<infer U> ? U : never;
+export type ResultErrTypes<E extends Result<any, any>[]> = {
+  [key in keyof E]: E[key] extends Result<any, any>
+    ? ResultErrType<E[key]>
+    : never;
+};
 
-export interface Resultable<T, E extends Error = Error> {
+export interface Resultable<T, E> {
   /**
    * Returns `true` if is an `Ok` value
    */
@@ -42,7 +47,7 @@ export interface Resultable<T, E extends Error = Error> {
   /**
    * Transforms `Result<T, E>` to `Result<T, F>` by applying the provided function `f` to the contained value of `Err(err)` and leaving `Ok` values unchanged
    */
-  mapErr<F extends Error>(f: (err: E) => F): Result<T, F>;
+  mapErr<F>(f: (err: E) => F): Result<T, F>;
   /**
    * Transforms `Result<T,E>` into `Option<E>`, mapping `Err(e)` to `Some(e)` and `Ok(v)` to None
    */
@@ -60,7 +65,7 @@ export interface Resultable<T, E extends Error = Error> {
    * @returns `Err<F>` if this is `Ok<T>` and res is `Err<F>`
    * @returns `Ok<U>` if this is `Ok<T>` and res is `Ok<U>`
    */
-  and<U, F extends Error>(res: Result<U, F>): Result<U, E | F>;
+  and<U, F>(res: Result<U, F>): Result<U, E | F>;
   /**
    * Treat the Result as a boolean value, where Ok acts like true and Err acts like false.
    *
@@ -70,10 +75,10 @@ export interface Resultable<T, E extends Error = Error> {
    * @returns `Ok<U>` if this is `Err<E>` and res is `Ok<U>`
    * @returns `Err<F>` if this is `Err<E>` and res is `Err<F>`
    */
-  or<U, F extends Error>(res: Result<U, F>): Result<T | U, F>;
+  or<U, F>(res: Result<U, F>): Result<T | U, F>;
 }
 
-export type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
+export type Result<T, E> = Ok<T> | Err<E>;
 
 export class Ok<T> implements Resultable<T, never> {
   constructor(private val: T) {}
@@ -108,7 +113,7 @@ export class Ok<T> implements Resultable<T, never> {
   err(): None {
     return none;
   }
-  and<U, F extends Error>(res: Result<U, F>): Result<U, F> {
+  and<U, F>(res: Result<U, F>): Result<U, F> {
     return res;
   }
   or(): Ok<T> {
@@ -116,7 +121,7 @@ export class Ok<T> implements Resultable<T, never> {
   }
 }
 
-export class Err<E extends Error> implements Resultable<never, E> {
+export class Err<E> implements Resultable<never, E> {
   constructor(private error: E) {}
 
   isOk(): false {
@@ -137,7 +142,7 @@ export class Err<E extends Error> implements Resultable<never, E> {
   map(): Err<E> {
     return error(this.error);
   }
-  mapErr<F extends Error>(f: (err: E) => F): Err<F> {
+  mapErr<F>(f: (err: E) => F): Err<F> {
     return error(f(this.error));
   }
   getErr(): E {
@@ -152,13 +157,13 @@ export class Err<E extends Error> implements Resultable<never, E> {
   and(): Err<E> {
     return this;
   }
-  or<U, F extends Error>(res: Result<U, F>): Result<U, F> {
+  or<U, F>(res: Result<U, F>): Result<U, F> {
     return res;
   }
 }
 
 export const ok = <T>(val: T): Ok<T> => new Ok(val);
-export const error = <E extends Error>(err: E): Err<E> => new Err<E>(err);
+export const error = <E>(err: E): Err<E> => new Err<E>(err);
 
 /**
  * Evaluates a set of `Result`s
@@ -169,25 +174,24 @@ export const error = <E extends Error>(err: E): Err<E> => new Err<E>(err);
 export const tryAllResults = <T extends Result<any, any>[]>(
   ...results: T
 ): Result<
-  { [I in keyof T]: ExtractResult<T[I]> },
-  CompositeError<{ [R in keyof T]: ExtractError<T[R]> }>
+  ResultOkTypes<T>,
+  { [key in keyof T]: Option<ResultErrType<T[key]>> }
 > => {
-  const okResults: { [I in keyof T]: ExtractResult<T[I]> } = [] as any;
-  let errors = new CompositeError<any[]>();
+  const okResults = [] as ResultOkTypes<T>;
+  const errors = [] as { [key in keyof T]: Option<ResultErrType<T[key]>> };
+  let errCount = 0;
 
   for (const result of results) {
     if (result.isOk()) {
       okResults.push(result.getValue());
+      errors.push(none);
     } else {
-      errors = errors.append(result.getErr());
+      errCount++;
+      errors.push(result.err());
     }
   }
 
-  if (errors.hasErrors())
-    return error(errors) as Result<
-      never,
-      CompositeError<{ [R in keyof T]: ExtractError<T[R]> }>
-    >;
+  if (errCount > 0) return error(errors);
 
   return ok(okResults);
 };
@@ -200,11 +204,8 @@ export const tryAllResults = <T extends Result<any, any>[]>(
  */
 export const allResults = <T extends Result<any, any>[]>(
   ...results: T
-): Result<
-  { [I in keyof T]: ExtractResult<T[I]> },
-  { [R in keyof T]: ExtractError<T[R]> }[number]
-> => {
-  const okResults: { [I in keyof T]: ExtractResult<T[I]> } = [] as any;
+): Result<ResultOkTypes<T>, ResultErrTypes<T>[number]> => {
+  const okResults = [] as ResultOkTypes<T>;
 
   for (const result of results) {
     if (result.isOk()) {
@@ -224,24 +225,18 @@ export const allResults = <T extends Result<any, any>[]>(
  */
 export const anyResults = <T extends Result<any, any>[]>(
   ...results: T
-): Result<
-  { [I in keyof T]: ExtractResult<T[I]> }[number],
-  CompositeError<{ [R in keyof T]: ExtractError<T[R]> }>
-> => {
-  let errors = new CompositeError<any[]>();
+): Result<ResultOkTypes<T>[number], ResultErrTypes<T>> => {
+  const errors = [] as ResultErrTypes<T>;
 
   for (const result of results) {
     if (result.isOk()) {
       return result;
     } else {
-      errors = errors.append(result.getErr());
+      errors.push(result.getErr());
     }
   }
 
-  return error(errors) as Result<
-    never,
-    CompositeError<{ [R in keyof T]: ExtractError<T[R]> }>
-  >;
+  return error(errors);
 };
 
 /**
@@ -249,7 +244,7 @@ export const anyResults = <T extends Result<any, any>[]>(
  *
  * `Ok(None)` will be mapped to `None`. `Ok(Some(_))` and `Err(_)` will be mapped to `Some(Ok(_))` and `Some(Err(_))`
  */
-export const transposeResult = <T, E extends Error>(
+export const transposeResult = <T, E>(
   result: Result<Option<T>, E>
 ): Option<Result<T, E>> => {
   if (result.isOk()) {
