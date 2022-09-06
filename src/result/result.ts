@@ -166,10 +166,11 @@ export const ok = <T>(val: T): Ok<T> => new Ok(val);
 export const error = <E>(err: E): Err<E> => new Err<E>(err);
 
 /**
- * Evaluates a set of `Result`s
- * Evaluates all values wether they are `Error` or `Ok`
- * If errors are found, returns a `CombinedError` with all of them.
- * If all values are `Ok`, returns a `CombinedResult` with all `Ok` values
+ * Evaluates a set of `Result`s wether they are `Err` or `Ok`.
+ *
+ * Returns an array of `Option`s with all encountered `Err`.
+ *
+ * If all values are `Ok`, returns a tuple combining all values.
  */
 export const tryAllResults = <T extends Result<any, any>[]>(
   ...results: T
@@ -198,6 +199,7 @@ export const tryAllResults = <T extends Result<any, any>[]>(
 
 /**
  * Evaluates a set of `Result`s.
+ *
  * Returns an `Ok` with all `Ok` values if there is no `Error`.
  *
  * Returns `Error` with the first evaluated error result.
@@ -220,7 +222,9 @@ export const allResults = <T extends Result<any, any>[]>(
 
 /**
  * Evaluates a set of `Result`s
+ *
  * Returns an `Ok` with the first result evaluated is `Ok`
+ *
  * If no `Ok` is found, returns an `Error` containing the collected error values
  */
 export const anyResults = <T extends Result<any, any>[]>(
