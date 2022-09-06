@@ -51,6 +51,26 @@ export interface Resultable<T, E extends Error = Error> {
    * Transforms `Result<T,E>` into `Option<T>`, mapping `Ok(v)` to `Some(v)` and `Err(e)` to None
    */
   ok(): Option<T>;
+  /**
+   * Treat the `Result` as a boolean value, where `Ok` acts like true and `Err` acts like false.
+   *
+   * The `and` method can produce a `Result<U, E>` value having a different inner type U than `Result<T, E>`.
+   *
+   * @returns `Err<E>` if this is `Err<E>`
+   * @returns `Err<F>` if this is `Ok<T>` and res is `Err<F>`
+   * @returns `Ok<U>` if this is `Ok<T>` and res is `Ok<U>`
+   */
+  and<U, F extends Error>(res: Result<U, F>): Result<U, E | F>;
+  /**
+   * Treat the Result as a boolean value, where Ok acts like true and Err acts like false.
+   *
+   * The or method can produce a Result<T, F> value having a different error type F than Result<T, E>.
+   *
+   * @returns `Ok<T>` if this is `Ok<Ts>`
+   * @returns `Ok<U>` if this is `Err<E>` and res is `Ok<U>`
+   * @returns `Err<F>` if this is `Err<E>` and res is `Err<F>`
+   */
+  or<U, F extends Error>(res: Result<U, F>): Result<T | U, F>;
 }
 
 export type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
@@ -88,6 +108,12 @@ export class Ok<T> implements Resultable<T, never> {
   err(): None {
     return none;
   }
+  and<U, F extends Error>(res: Result<U, F>): Result<U, F> {
+    return res;
+  }
+  or(): Ok<T> {
+    return this;
+  }
 }
 
 export class Err<E extends Error> implements Resultable<never, E> {
@@ -122,6 +148,12 @@ export class Err<E extends Error> implements Resultable<never, E> {
   }
   err(): Some<E> {
     return some(this.error);
+  }
+  and(): Err<E> {
+    return this;
+  }
+  or<U, F extends Error>(res: Result<U, F>): Result<U, F> {
+    return res;
   }
 }
 

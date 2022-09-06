@@ -63,6 +63,37 @@ export interface Optionable<T> {
    * Removes one level of nesting from an `Option<Option<T>>`
    */
   flatten(): Option<T extends Option<infer U> ? U : T>;
+  /**
+   * Treat the `Option` as a boolean value, where `Some` acts like true and `None` acts like false.
+   *
+   * Takes another `Option` as input, and produce an `Option` as output. This produces an `Option<U>` value having a different inner type `U` than `Option<T>`.
+   *
+   * @returns `None` if this is `None`
+   * @returns `None` if this is `Some<T>` and optb is `None`
+   * @returns `Some<U>` if this is `Some<T>` and optb is `Some<U>`
+   */
+  and<U>(optb: Option<U>): Option<U>;
+  /**
+   * Treat the `Option` as a boolean value, where `Some` acts like true and `None` acts like false.
+   *
+   * Takes another `Option` as input, and produce an `Option` as output.
+   *
+   * @returns `Some<T>` if this is `Some<T>`
+   * @returns `Some<U>` if this is `Some<T>` and optb is `Some<U>`
+   * @returns `None` if this is `None` and optb is `None`
+   */
+  or<U>(optb: Option<U>): Option<T | U>;
+  /**
+   * Treat the `Option` as a boolean value, where `Some` acts like true and `None` acts like false.
+   *
+   * Takes another `Option` as input, and produce an `Option` as output.
+   *
+   * @returns `None` if this is `None` and optb is `None`
+   * @returns `Some<U>` if this is `None` and optb is `Some<U>`
+   * @returns `Some<T>` if this is `Some<T>` and optb is `None`
+   * @returns `None` if this is `Some<T>` and optb is `Some<U>`
+   */
+  xor<U>(optb: Option<U>): Option<T | U>;
 }
 
 // The Option<T> type is a superposition of SomeOption and a Optionable<never> (that has no value)
@@ -117,6 +148,16 @@ export class Some<T> implements Optionable<T> {
   getValue(): T {
     return this.value;
   }
+  and<U>(option: Option<U>): Option<U> {
+    return option;
+  }
+  or(): Some<T> {
+    return this;
+  }
+  xor<U>(option: Option<U>): Option<T> {
+    if (option.isSome()) return none;
+    return this;
+  }
 }
 
 export class None implements Optionable<never> {
@@ -155,6 +196,16 @@ export class None implements Optionable<never> {
   }
   flatten(): None {
     return none;
+  }
+  and(): None {
+    return this;
+  }
+  or<U>(option: Option<U>): Option<U> {
+    return option;
+  }
+  xor<U>(option: Option<U>): Option<U> {
+    if (option.isSome()) return option;
+    return this;
   }
 }
 

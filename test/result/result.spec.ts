@@ -63,6 +63,41 @@ describe("Result test", () => {
       ).toBe(OK_VALUE);
     });
 
+    it("and() with Ok(y) should return Ok(y)", () => {
+      const r = returnsOk();
+
+      const combined = r.and(ok(3) as Result<number>);
+
+      expect(combined.unwrap()).toBe(3);
+    });
+
+    it("and() with Err(d) should return Err(d)", () => {
+      const r: Result<number> = returnsOk();
+
+      const combined = r.and(error(new Error("2")) as Result<number>);
+
+      expect(combined.isErr()).toBeTruthy();
+      if (combined.isErr()) {
+        expect(combined.getErr().message).toBe("2");
+      }
+    });
+
+    it("or() with Ok(y) should return Ok(x)", () => {
+      const r = returnsOk();
+
+      const combined = r.or(ok(3) as Result<number>);
+
+      expect(combined.unwrap()).toBe(OK_VALUE);
+    });
+
+    it("or() with Err(e) should return Ok(x)", () => {
+      const r = returnsOk();
+
+      const combined = r.or(ok(3) as Result<number>);
+
+      expect(combined.unwrap()).toBe(OK_VALUE);
+    });
+
     it("ok() should transform to Some<T>", () => {
       const r = returnsOk();
 
@@ -150,6 +185,44 @@ describe("Result test", () => {
       expect(mapped.isErr()).toBeTruthy();
       if (mapped.isErr()) {
         expect(mapped.getErr().message).toBe("Invalid Result" + newMessage);
+      }
+    });
+
+    it("and() with Ok(y) should return Err(e)", () => {
+      const r = returnsErr();
+
+      const combined = r.and(ok(3) as Result<number>);
+
+      expect(() => combined.unwrap()).toThrow(CustomError);
+    });
+
+    it("and() with Err(d) should return Err(e)", () => {
+      const r = returnsErr();
+
+      const combined = r.and(error(new Error("2")) as Result<number>);
+
+      expect(combined.isErr()).toBeTruthy();
+      if (combined.isErr()) {
+        expect(combined.getErr().message).toBe("Invalid Result");
+      }
+    });
+
+    it("or() with Ok(y) should return Ok(y)", () => {
+      const r = returnsErr();
+
+      const combined = r.or(ok(3) as Result<number>);
+
+      expect(combined.unwrap()).toBe(3);
+    });
+
+    it("or() with Err(d) should return Err(d)", () => {
+      const r = returnsErr();
+
+      const combined = r.or(error(new Error("2")) as Result<number>);
+
+      expect(combined.isErr()).toBeTruthy();
+      if (combined.isErr()) {
+        expect(combined.getErr().message).toBe("2");
       }
     });
 

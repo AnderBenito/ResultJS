@@ -98,6 +98,54 @@ describe("Options test", () => {
 
       expect(flattened.isNone()).toBeTruthy();
     });
+
+    it("and() with Some(y) should return Some(y)", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.and(some(2));
+
+      expect(combined.unwrap()).toBe(2);
+    });
+
+    it("and() with None should return None", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.and(none);
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("or() with Some(y) should return Some(x)", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.or(some("a") as Option<string>);
+
+      expect(combined.unwrap()).toBe(SOME_VALUE);
+    });
+
+    it("or() with None should return Some(x)", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.or(none);
+
+      expect(combined.unwrap()).toBe(SOME_VALUE);
+    });
+
+    it("xor() with Some(y) should return None", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.xor(some("a") as Option<string>);
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("xor() with None should return Some(x)", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.xor(none);
+
+      expect(combined.unwrap()).toBe(SOME_VALUE);
+    });
   });
 
   describe("Test None options", () => {
@@ -116,7 +164,6 @@ describe("Options test", () => {
 
       expect(r.isNone()).toBeTruthy();
       if (r.isNone()) {
-        r.unwrap();
       } else {
         r.getValue();
       }
@@ -178,6 +225,54 @@ describe("Options test", () => {
       const flattened = r.flatten();
 
       expect(flattened.isNone()).toBeTruthy();
+    });
+
+    it("and() with Some(y) should return None", () => {
+      const r = returnsNone();
+
+      const combined = r.and(some(2));
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("and() with None should return None", () => {
+      const r = returnsNone();
+
+      const combined = r.and(none);
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("or() with Some(y) should return Some(y)", () => {
+      const r = returnsNone();
+
+      const combined = r.or(some("a") as Option<string>);
+
+      expect(combined.unwrap()).toBe("a");
+    });
+
+    it("or() with None should return None", () => {
+      const r = returnsNone();
+
+      const combined = r.or(none);
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("xor() with Some(y) should return Some(y)", () => {
+      const r = returnsNone();
+
+      const combined = r.xor(some("a") as Option<string>);
+
+      expect(combined.unwrap()).toBe("a");
+    });
+
+    it("xor() with None should return None", () => {
+      const r = returnsNone();
+
+      const combined = r.xor(none);
+
+      expect(combined.isNone()).toBeTruthy();
     });
   });
 });
