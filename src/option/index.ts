@@ -9,4 +9,7 @@ export {
   anyOptions,
   transposeOption,
   isOption,
+  OptionUnwrapError,
+  Optional,
+  Optionable,
 } from "./option";

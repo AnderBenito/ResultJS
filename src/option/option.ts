@@ -1,5 +1,11 @@
 import { Err, error, Ok, ok, Result } from "../result";
 
+export class OptionUnwrapError extends Error {
+  constructor() {
+    super("Cannot unwrap value of a None variant");
+  }
+}
+
 export type ExtractValue<T> = T extends Optionable<infer U> ? U : never;
 
 export interface Optionable<T> {
@@ -171,7 +177,7 @@ export class None implements Optionable<never> {
     throw new Error(msg);
   }
   unwrap(): never {
-    throw new Error("Cannot get value of None");
+    throw new OptionUnwrapError();
   }
   unwrapOr<T>(val: T): T {
     return val;

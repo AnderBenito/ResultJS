@@ -10,5 +10,6 @@ export {
   allResults,
   anyResults,
   transposeResult,
+  Resultable,
 } from "./result";
 export * from "./utils";
