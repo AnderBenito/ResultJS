@@ -111,7 +111,7 @@ export class Ok<T> implements Resultable<T, never> {
     return some(this.val);
   }
   err(): None {
-    return none;
+    return none();
   }
   and<U, F>(res: Result<U, F>): Result<U, F> {
     return res;
@@ -149,7 +149,7 @@ export class Err<E> implements Resultable<never, E> {
     return this.error;
   }
   ok(): None {
-    return none;
+    return none();
   }
   err(): Some<E> {
     return some(this.error);
@@ -185,7 +185,7 @@ export const tryAllResults = <T extends Result<any, any>[]>(
   for (const result of results) {
     if (result.isOk()) {
       okResults.push(result.getValue());
-      errors.push(none);
+      errors.push(none());
     } else {
       errCount++;
       errors.push(result.err());
@@ -254,7 +254,7 @@ export const transposeResult = <T, E>(
   if (result.isOk()) {
     const val = result.getValue();
 
-    if (val.isNone()) return none;
+    if (val.isNone()) return none();
     return some(ok(val.getValue()));
   }
 

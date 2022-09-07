@@ -138,15 +138,15 @@ export class Some<T> implements Optionable<T> {
   }
   filter(f: (val: T) => boolean): Option<T> {
     if (f(this.value) === true) return this;
-    return none;
+    return none();
   }
   zip<U>(other: Option<U>): Option<[T, U]> {
     if (other.isSome()) return some<[T, U]>([this.value, other.getValue()]);
-    return none;
+    return none();
   }
   flatten(): Option<T extends Option<infer U> ? U : T> {
     if (isOption<T extends Option<infer U> ? U : T>(this.value)) {
-      if (this.value.isNone()) return none;
+      if (this.value.isNone()) return none();
       return some(this.value.getValue());
     }
     return some(this.value) as Option<T extends Option<infer U> ? U : T>;
@@ -161,7 +161,7 @@ export class Some<T> implements Optionable<T> {
     return this;
   }
   xor<U>(option: Option<U>): Option<T> {
-    if (option.isSome()) return none;
+    if (option.isSome()) return none();
     return this;
   }
 }
@@ -192,16 +192,16 @@ export class None implements Optionable<never> {
     return err(error);
   }
   map(): None {
-    return none;
+    return none();
   }
   filter(): None {
-    return none;
+    return none();
   }
   zip(): None {
-    return none;
+    return none();
   }
   flatten(): None {
-    return none;
+    return none();
   }
   and(): None {
     return this;
@@ -215,10 +215,11 @@ export class None implements Optionable<never> {
   }
 }
 
+const _none: None = new None();
 export const some = <T>(val: T): Some<T> => new Some(val);
-export const none: None = new None();
+export const none = () => _none;
 export const optionFrom = <T>(val?: T): Option<T> =>
-  hasValue(val) ? some(val) : none;
+  hasValue(val) ? some(val) : none();
 
 const hasValue = <T>(val?: T): val is T => val !== undefined && val !== null;
 
@@ -232,7 +233,7 @@ export const transposeOption = <T, E>(
     return err(result.getErr());
   }
 
-  return ok(none);
+  return ok(none());
 };
 
 /**
@@ -272,7 +273,7 @@ export const anyOptions = <T extends Option<any>[]>(
     }
   }
 
-  return none;
+  return none();
 };
 
 export const isOption = <T>(opt: unknown): opt is Option<T> => {

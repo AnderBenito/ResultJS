@@ -12,7 +12,7 @@ describe("Options test", () => {
     });
 
     it("isOption should return true", () => {
-      expect(isOption(none)).toBeTruthy();
+      expect(isOption(none())).toBeTruthy();
     });
 
     it("isOption should return false", () => {
@@ -93,7 +93,7 @@ describe("Options test", () => {
 
     it("zip with other None should return None", () => {
       const r = returnsSomeValue();
-      const zipped = r.zip(none);
+      const zipped = r.zip(none());
 
       expect(zipped.isNone()).toBeTruthy();
     });
@@ -115,7 +115,7 @@ describe("Options test", () => {
     });
 
     it("Should flatten to None", () => {
-      const r = some(none);
+      const r = some(none());
 
       const flattened = r.flatten();
 
@@ -133,7 +133,7 @@ describe("Options test", () => {
     it("and() with None should return None", () => {
       const r = returnsSomeValue();
 
-      const combined = r.and(none);
+      const combined = r.and(none());
 
       expect(combined.isNone()).toBeTruthy();
     });
@@ -149,7 +149,7 @@ describe("Options test", () => {
     it("or() with None should return Some(x)", () => {
       const r = returnsSomeValue();
 
-      const combined = r.or(none);
+      const combined = r.or(none());
 
       expect(combined.unwrap()).toBe(SOME_VALUE);
     });
@@ -165,7 +165,7 @@ describe("Options test", () => {
     it("xor() with None should return Some(x)", () => {
       const r = returnsSomeValue();
 
-      const combined = r.xor(none);
+      const combined = r.xor(none());
 
       expect(combined.unwrap()).toBe(SOME_VALUE);
     });
@@ -173,7 +173,7 @@ describe("Options test", () => {
 
   describe("Test None options", () => {
     function returnsNone(): Option<number> {
-      return none;
+      return none();
     }
 
     it("Should throw on unwrap", () => {
@@ -237,13 +237,13 @@ describe("Options test", () => {
 
     it("zip with other None should return None", () => {
       const r = returnsNone();
-      const zipped = r.zip(none);
+      const zipped = r.zip(none());
 
       expect(zipped.isNone()).toBeTruthy();
     });
 
     it("Should keep same level", () => {
-      const r = none;
+      const r = none();
 
       const flattened = r.flatten();
 
@@ -261,7 +261,7 @@ describe("Options test", () => {
     it("and() with None should return None", () => {
       const r = returnsNone();
 
-      const combined = r.and(none);
+      const combined = r.and(none());
 
       expect(combined.isNone()).toBeTruthy();
     });
@@ -277,7 +277,7 @@ describe("Options test", () => {
     it("or() with None should return None", () => {
       const r = returnsNone();
 
-      const combined = r.or(none);
+      const combined = r.or(none());
 
       expect(combined.isNone()).toBeTruthy();
     });
@@ -293,7 +293,7 @@ describe("Options test", () => {
     it("xor() with None should return None", () => {
       const r = returnsNone();
 
-      const combined = r.xor(none);
+      const combined = r.xor(none());
 
       expect(combined.isNone()).toBeTruthy();
     });

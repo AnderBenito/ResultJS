@@ -145,7 +145,7 @@ describe("Result test", () => {
     });
 
     it("transposeResult() should transform to None", () => {
-      const r: Result<Option<number>, Error> = ok(none);
+      const r: Result<Option<number>, Error> = ok(none());
 
       const transposed = transposeResult(r);
 
