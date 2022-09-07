@@ -6,7 +6,7 @@ export {
   ResultOkTypes,
   Err,
   Ok,
-  error,
+  err,
   ok,
   tryAllResults,
   allResults,
@@ -14,4 +14,4 @@ export {
   transposeResult,
   Resultable,
 } from "./result";
-export * from "./utils";
+export { wrap, wrapAsync } from "./utils";

@@ -1,6 +1,6 @@
 import {
   allResults,
-  error,
+  err,
   ok,
   Result,
   tryAllResults,
@@ -28,7 +28,7 @@ describe("Result test", () => {
 
     it("Should all with Ok and Error and return Error", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[], Error> = error(new Error("2"));
+      const r2: Result<string[], Error> = err(new Error("2"));
 
       const r = allResults(r1, r2);
 
@@ -40,8 +40,8 @@ describe("Result test", () => {
     });
 
     it("Should all with Error and Error and return Error", () => {
-      const r1: Result<number, BaseError> = error(new BaseError("1"));
-      const r2: Result<string[], Error> = error(new Error("2"));
+      const r1: Result<number, BaseError> = err(new BaseError("1"));
+      const r2: Result<string[], Error> = err(new Error("2"));
 
       const r = allResults(r1, r2);
 
@@ -70,7 +70,7 @@ describe("Result test", () => {
 
     it("Should tryAll with Ok and Error and return Error", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[], Error> = error(new Error("Error"));
+      const r2: Result<string[], Error> = err(new Error("Error"));
 
       const r = tryAllResults(r1, r2);
 
@@ -86,8 +86,8 @@ describe("Result test", () => {
     });
 
     it("Should tryAll with Error and Error and return Error", () => {
-      const r1: Result<number, BaseError> = error(new BaseError("Error"));
-      const r2: Result<string[], Error> = error(new Error("Error"));
+      const r1: Result<number, BaseError> = err(new BaseError("Error"));
+      const r2: Result<string[], Error> = err(new Error("Error"));
 
       const r = tryAllResults(r1, r2);
 
@@ -119,7 +119,7 @@ describe("Result test", () => {
 
     it("Should tryAny with Ok and Error and return Ok", () => {
       const r1: Result<number, BaseError> = ok(1);
-      const r2: Result<string[], Error> = error(new Error("2"));
+      const r2: Result<string[], Error> = err(new Error("2"));
 
       const r = anyResults(r1, r2);
 
@@ -132,7 +132,7 @@ describe("Result test", () => {
     });
 
     it("Should tryAny with Error and Ok and return Ok", () => {
-      const r1: Result<string[], Error> = error(new Error("1"));
+      const r1: Result<string[], Error> = err(new Error("1"));
       const r2: Result<number, BaseError> = ok(2);
 
       const r = anyResults(r1, r2);
@@ -146,8 +146,8 @@ describe("Result test", () => {
     });
 
     it("Should tryAny with Error and Error and return Error", () => {
-      const r1: Result<number, BaseError> = error(new BaseError("1"));
-      const r2: Result<string[], Error> = error(new Error("2"));
+      const r1: Result<number, BaseError> = err(new BaseError("1"));
+      const r2: Result<string[], Error> = err(new Error("2"));
 
       const r = anyResults(r1, r2);
 

@@ -1,5 +1,5 @@
 import {
-  error,
+  err,
   none,
   ok,
   Option,
@@ -74,7 +74,7 @@ describe("Result test", () => {
     it("and() with Err(d) should return Err(d)", () => {
       const r: Result<number, Error> = returnsOk();
 
-      const combined = r.and(error(new Error("2")));
+      const combined = r.and(err(new Error("2")));
 
       expect(combined.isErr()).toBeTruthy();
       if (combined.isErr()) {
@@ -132,7 +132,7 @@ describe("Result test", () => {
   describe("Test Error Result", () => {
     class CustomError extends Error {}
     function returnsErr(): Result<number, CustomError> {
-      return error(new CustomError("Invalid Result"));
+      return err(new CustomError("Invalid Result"));
     }
 
     it("isErr should be true", () => {
@@ -199,7 +199,7 @@ describe("Result test", () => {
     it("and() with Err(d) should return Err(e)", () => {
       const r = returnsErr();
 
-      const combined = r.and(error(new Error("2")));
+      const combined = r.and(err(new Error("2")));
 
       expect(combined.isErr()).toBeTruthy();
       if (combined.isErr()) {
@@ -218,7 +218,7 @@ describe("Result test", () => {
     it("or() with Err(d) should return Err(d)", () => {
       const r = returnsErr();
 
-      const combined = r.or(error(new Error("2")));
+      const combined = r.or(err(new Error("2")));
 
       expect(combined.isErr()).toBeTruthy();
       if (combined.isErr()) {
@@ -239,7 +239,7 @@ describe("Result test", () => {
     });
 
     it("transposeResult() should transform to Some(Ok(_))", () => {
-      const r: Result<Option<number>, Error> = error(new Error());
+      const r: Result<Option<number>, Error> = err(new Error());
 
       const transposed = transposeResult(r as Result<Option<number>, Error>);
 

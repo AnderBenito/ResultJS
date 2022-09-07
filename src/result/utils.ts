@@ -1,12 +1,12 @@
-import { error, ok, Result } from "./result";
+import { err, ok, Result } from "./result";
 
 export function wrap<T, E>(cb: () => T): Result<T, E> {
   try {
     const result = cb();
 
     return ok(result);
-  } catch (err) {
-    return error(err);
+  } catch (error) {
+    return err(error);
   }
 }
 
@@ -17,7 +17,7 @@ export async function wrapAsync<T, E>(
     const result = await cb();
 
     return ok(result);
-  } catch (err) {
-    return error(err);
+  } catch (error) {
+    return err(error);
   }
 }

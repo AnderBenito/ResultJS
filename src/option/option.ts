@@ -1,4 +1,4 @@
-import { Err, error, Ok, ok, Result } from "../result";
+import { Err, err, Ok, ok, Result } from "../result";
 
 export class OptionUnwrapError extends Error {
   constructor() {
@@ -188,8 +188,8 @@ export class None implements Optionable<never> {
   unwrapOrUndefined<T>(): T | undefined {
     return undefined;
   }
-  okOr<E>(err: E): Err<E> {
-    return error(err);
+  okOr<E>(error: E): Err<E> {
+    return err(error);
   }
   map(): None {
     return none;
@@ -229,7 +229,7 @@ export const transposeOption = <T, E>(
     const result = option.getValue();
 
     if (result.isOk()) return ok(some(result.getValue()));
-    return error(result.getErr());
+    return err(result.getErr());
   }
 
   return ok(none);

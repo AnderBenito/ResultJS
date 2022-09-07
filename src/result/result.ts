@@ -35,7 +35,7 @@ export interface Resultable<T, E> {
    */
   unwrapOr(val: T): T;
   /**
-   * Extract the contained value in `Result<T, E>` when is `Some`
+   * Extract the contained value in `Result<T, E>` when is `Ok(t)`
    *
    * If is `Err(err)` returns the result of evaluating the provided function `f`
    */
@@ -67,9 +67,9 @@ export interface Resultable<T, E> {
    */
   and<U, F>(res: Result<U, F>): Result<U, E | F>;
   /**
-   * Treat the Result as a boolean value, where Ok acts like true and Err acts like false.
+   * Treat the `Result` as a boolean value, where Ok acts like true and Err acts like false.
    *
-   * The or method can produce a Result<T, F> value having a different error type F than Result<T, E>.
+   * The `or` method can produce a `Result<T, F>` value having a different error type `F` `than Result<T, E>`.
    *
    * @returns `Ok<T>` if this is `Ok<Ts>`
    * @returns `Ok<U>` if this is `Err<E>` and res is `Ok<U>`
@@ -140,10 +140,10 @@ export class Err<E> implements Resultable<never, E> {
     return f(this.error);
   }
   map(): Err<E> {
-    return error(this.error);
+    return err(this.error);
   }
   mapErr<F>(f: (err: E) => F): Err<F> {
-    return error(f(this.error));
+    return err(f(this.error));
   }
   getErr(): E {
     return this.error;
@@ -163,7 +163,7 @@ export class Err<E> implements Resultable<never, E> {
 }
 
 export const ok = <T>(val: T): Ok<T> => new Ok(val);
-export const error = <E>(err: E): Err<E> => new Err<E>(err);
+export const err = <E>(err: E): Err<E> => new Err<E>(err);
 
 /**
  * Evaluates a set of `Result`s wether they are `Err` or `Ok`.
@@ -192,7 +192,7 @@ export const tryAllResults = <T extends Result<any, any>[]>(
     }
   }
 
-  if (errCount > 0) return error(errors);
+  if (errCount > 0) return err(errors);
 
   return ok(okResults);
 };
@@ -240,7 +240,7 @@ export const anyResults = <T extends Result<any, any>[]>(
     }
   }
 
-  return error(errors);
+  return err(errors);
 };
 
 /**
@@ -258,5 +258,9 @@ export const transposeResult = <T, E>(
     return some(ok(val.getValue()));
   }
 
-  return some(error(result.getErr()));
+  return some(err(result.getErr()));
+};
+
+export const isResult = <T, E>(res: unknown): res is Result<T, E> => {
+  return res instanceof Ok || res instanceof Err;
 };
