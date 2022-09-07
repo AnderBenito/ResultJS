@@ -76,6 +76,18 @@ export interface Resultable<T, E> {
    * @returns `Err<F>` if this is `Err<E>` and res is `Err<F>`
    */
   or<U, F>(res: Result<U, F>): Result<T | U, F>;
+  /**
+   * Calls `f` if the result is `Ok`, otherwise returns the `Err` value of self.
+   *
+   * This function can be used for control flow based on Result values.
+   */
+  andThen<U>(f: (val: T) => Result<U, E>): Result<U, E>;
+  /**
+   * Calls `f` if the result is `Err`, otherwise returns the `Ok` value of self.
+   *
+   * This function can be used for control flow based on result values.
+   */
+  orElse<F>(f: (error: E) => Result<T, F>): Result<T, F>;
 }
 
 export type Result<T, E> = Ok<T> | Err<E>;
@@ -119,6 +131,12 @@ export class Ok<T> implements Resultable<T, never> {
   or(): Ok<T> {
     return this;
   }
+  andThen<U, E>(f: (val: T) => Result<U, E>): Result<U, E> {
+    return f(this.val);
+  }
+  orElse(): Ok<T> {
+    return this;
+  }
 }
 
 export class Err<E> implements Resultable<never, E> {
@@ -159,6 +177,12 @@ export class Err<E> implements Resultable<never, E> {
   }
   or<U, F>(res: Result<U, F>): Result<U, F> {
     return res;
+  }
+  andThen(): Err<E> {
+    return this;
+  }
+  orElse<T, F>(f: (error: E) => Result<T, F>): Result<T, F> {
+    return f(this.error);
   }
 }
 

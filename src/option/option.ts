@@ -100,6 +100,16 @@ export interface Optionable<T> {
    * @returns `None` if this is `Some<T>` and optb is `Some<U>`
    */
   xor<U>(optb: Option<U>): Option<T | U>;
+  /**
+   * Returns `None` if the option is `None`, otherwise calls `f` with the wrapped value and returns the result.
+   *
+   * Some languages call this operation flatmap.
+   */
+  andThen<U>(f: (val: T) => Option<U>): Option<U>;
+  /**
+   * Returns the option if it contains a value, otherwise calls `f` and returns the result.
+   */
+  orElse(f: () => Option<T>): Option<T>;
 }
 
 // The Option<T> type is a superposition of SomeOption and a Optionable<never> (that has no value)
@@ -164,6 +174,12 @@ export class Some<T> implements Optionable<T> {
     if (option.isSome()) return none();
     return this;
   }
+  andThen<U>(f: (val: T) => Option<U>): Option<U> {
+    return f(this.value);
+  }
+  orElse(): Some<T> {
+    return this;
+  }
 }
 
 export class None implements Optionable<never> {
@@ -212,6 +228,12 @@ export class None implements Optionable<never> {
   xor<U>(option: Option<U>): Option<U> {
     if (option.isSome()) return option;
     return this;
+  }
+  andThen(): None {
+    return this;
+  }
+  orElse<T>(f: () => Option<T>): Option<T> {
+    return f();
   }
 }
 

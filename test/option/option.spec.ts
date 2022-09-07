@@ -169,6 +169,38 @@ describe("Options test", () => {
 
       expect(combined.unwrap()).toBe(SOME_VALUE);
     });
+
+    it("andThen() with (val) => Some(t) should return Some(t)", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.andThen((val) => some(val + 1));
+
+      expect(combined.unwrap()).toBe(SOME_VALUE + 1);
+    });
+
+    it("andThen() with (val) => None should return None", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.andThen(() => none());
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("orElse() with () => Some(t) should return Some(x)", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.orElse(() => some("hello"));
+
+      expect(combined.unwrap()).toBe(SOME_VALUE);
+    });
+
+    it("orElse() with () => None should return Some(x)", () => {
+      const r = returnsSomeValue();
+
+      const combined = r.orElse(() => none());
+
+      expect(combined.unwrap()).toBe(SOME_VALUE);
+    });
   });
 
   describe("Test None options", () => {
@@ -294,6 +326,38 @@ describe("Options test", () => {
       const r = returnsNone();
 
       const combined = r.xor(none());
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("andThen() with (val) => Some(t) should return None", () => {
+      const r = returnsNone();
+
+      const combined = r.andThen((val) => some(val + 1));
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("andThen() with (val) => None should return None", () => {
+      const r = returnsNone();
+
+      const combined = r.andThen(() => none());
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("orElse() with () => Some(t) should return Some(t)", () => {
+      const r = returnsNone();
+
+      const combined = r.orElse(() => some("hello"));
+
+      expect(combined.unwrap()).toBe("hello");
+    });
+
+    it("orElse() with () => None should return None", () => {
+      const r = returnsNone();
+
+      const combined = r.orElse(() => none());
 
       expect(combined.isNone()).toBeTruthy();
     });

@@ -134,6 +134,41 @@ describe("Result test", () => {
       expect(r.err().isNone()).toBeTruthy();
     });
 
+    it("andThen() with (val) => Ok(y) should return Ok(y)", () => {
+      const r = returnsOk();
+
+      const combined = r.andThen((val) => ok(val + 1));
+
+      expect(combined.unwrap()).toBe(OK_VALUE + 1);
+    });
+
+    it("andThen() with (val) => Err(f) should return Err(f)", () => {
+      const r = returnsOk();
+
+      const combined = r.andThen(() => err("another error"));
+
+      expect(combined.isErr()).toBeTruthy();
+      if (combined.isErr()) {
+        expect(combined.getErr()).toBe("another error");
+      }
+    });
+
+    it("orElse() with () => Ok(y) should return Ok(x)", () => {
+      const r = returnsOk();
+
+      const combined = r.orElse(() => ok("hello"));
+
+      expect(combined.unwrap()).toBe(OK_VALUE);
+    });
+
+    it("orElse() with () => Err(f) should return Ok(x)", () => {
+      const r = returnsOk();
+
+      const combined = r.orElse(() => err("another error"));
+
+      expect(combined.unwrap()).toBe(OK_VALUE);
+    });
+
     it("transposeResult() should transform to Some(Ok(_))", () => {
       const r: Result<Option<number>, Error> = ok(some(OK_VALUE));
 
@@ -260,6 +295,47 @@ describe("Result test", () => {
       const r = returnsErr();
 
       expect(r.err().isSome()).toBeTruthy();
+    });
+
+    it("andThen() with (val) => Ok(y) should return Err(e)", () => {
+      const r = returnsErr();
+
+      const combined = r.andThen((val) => ok(val + 1));
+
+      expect(combined.isErr()).toBeTruthy();
+      if (combined.isErr()) {
+        expect(combined.getErr()).toBeInstanceOf(CustomError);
+      }
+    });
+
+    it("andThen() with (val) => Err(f) should return Err(e)", () => {
+      const r = returnsErr();
+
+      const combined = r.andThen(() => err("another error"));
+
+      expect(combined.isErr()).toBeTruthy();
+      if (combined.isErr()) {
+        expect(combined.getErr()).toBeInstanceOf(CustomError);
+      }
+    });
+
+    it("orElse() with () => Ok(y) should return Ok(y)", () => {
+      const r = returnsErr();
+
+      const combined = r.orElse(() => ok("hello"));
+
+      expect(combined.unwrap()).toBe("hello");
+    });
+
+    it("orElse() with () => Err(f) should return Err(f)", () => {
+      const r = returnsErr();
+
+      const combined = r.orElse((e) => err(e.message + " another error"));
+
+      expect(combined.isErr()).toBeTruthy();
+      if (combined.isErr()) {
+        expect(combined.getErr()).toBe("Invalid Result another error");
+      }
     });
 
     it("transposeResult() should transform to Some(Ok(_))", () => {

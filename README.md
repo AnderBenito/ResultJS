@@ -11,6 +11,8 @@
       - [UnwrapOrElse](#unwraporelse)
       - [Map](#map)
       - [MapErr](#maperr)
+      - [AndThen](#andthen)
+      - [OrElse](#orelse)
       - [Ok method](#ok-method)
       - [Err method](#err-method)
       - [And operator method](#and-operator-method)
@@ -25,6 +27,8 @@
       - [OkOr](#okor)
       - [Map](#map-1)
       - [Filter](#filter)
+      - [AndThen](#andthen-1)
+      - [OrElse](#orelse-1)
       - [Zip](#zip)
       - [Flatten](#flatten)
       - [And operator method](#and-operator-method-1)
@@ -184,6 +188,46 @@ const myWrongVal = errResult
     (err) => err.message + " Value must be greater than 5!"
   )
   .unwrap(); // Throws "Wrong input! Value must be greater than 5!"
+```
+
+#### AndThen
+
+The `andThen` calls `f` if the result is `Ok`, otherwise returns the `Err` value of self.
+
+This function can be used for control flow based on Result values.
+
+```ts
+const x = ok(1);
+x.andThen((val) => ok(val + 1)).unwrap() // Yields 2
+
+const x = ok(1);
+x.andThen(() => err("late error")).unwrap() // Throws "late error"
+
+const x = err("early error");
+x.andThen((val) => ok(val + 1)).unwrap() // Throws "early error"
+
+const x = err("early error");
+x.andThen(() => err("late error")).unwrap() // Throws "early error"
+```
+
+#### OrElse
+
+The `orElse` calls `f` if the result is `Err`, otherwise returns the `Ok` value of self.
+
+This function can be used for control flow based on Result values.
+
+```ts
+const x = ok(1);
+x.orElse((err) => ok(2)).unwrap() // Yields 1
+
+const x = ok(1);
+x.orElse((err) => err("late error")).unwrap() // Yields 1
+
+const x = err("early error");
+x.orElse((err) => ok(1)).unwrap() // Yields 1
+
+const x = err("early error");
+x.orElse((err) => err("late error")).unwrap() // Throws "late error"
 ```
 
 #### Ok method
@@ -414,6 +458,44 @@ const noneValue = noneOption
 
 const noneFilteredValue = noneOption
 .filter((val) => false).unwrap(); // Throws OptionUnwrapError
+```
+
+#### AndThen
+
+The `andThen` returns `None` if the option is `None`, otherwise calls `f` with the wrapped value and returns the result.
+
+Some languages call this operation flatmap.
+
+```ts
+const x = some(1);
+x.andThen((val) => some(val + 1)).unwrap() // Yields 2
+
+const x = some(1);
+x.andThen(() => none()).unwrap() // Throws OptionUnwrapError
+
+const x = none();
+x.andThen((val) => some(val + 1)).unwrap() // Throws OptionUnwrapError
+
+const x = none();
+x.andThen(() => none()).unwrap() // Throws OptionUnwrapError
+```
+
+#### OrElse
+
+The `orElse` returns the option if it contains a value, otherwise calls `f` and returns the result.
+
+```ts
+const x = some(1);
+x.orElse(() => some(2)).unwrap() // Yields 1
+
+const x = some(1);
+x.orElse(() => none()).unwrap() // Yields 1
+
+const x = none();
+x.orElse(() => some(1)).unwrap() // Yields 1
+
+const x = none();
+x.orElse(() => none()).unwrap() // Throws OptionUnwrapError
 ```
 
 #### Zip
