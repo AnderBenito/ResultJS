@@ -1,5 +1,6 @@
 import {
   err,
+  isResult,
   none,
   ok,
   Option,
@@ -13,6 +14,29 @@ describe("Result test", () => {
   function returnsOk(): Result<number, Error> {
     return ok(OK_VALUE);
   }
+
+  describe("Test isResult", () => {
+    it("isResult should return true", () => {
+      expect(isResult(ok(2))).toBeTruthy();
+    });
+
+    it("isResult should return true", () => {
+      expect(isResult(err("Error"))).toBeTruthy();
+    });
+
+    it("isResult should return false", () => {
+      expect(isResult(2)).toBeFalsy();
+    });
+
+    it("isResult should return false", () => {
+      expect(isResult(some(2))).toBeFalsy();
+    });
+
+    it("isResult should return false", () => {
+      expect(isResult(none)).toBeFalsy();
+    });
+  });
+
   describe("Test OK Result", () => {
     it("isOk should be true", () => {
       const r = returnsOk();

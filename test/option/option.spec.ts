@@ -1,10 +1,33 @@
-import { some, none, Option } from "../../src";
+import { some, none, Option, isOption, ok, err } from "../../src";
 
 describe("Options test", () => {
   const SOME_VALUE = 10;
   function returnsSomeValue(): Option<number> {
     return some(SOME_VALUE);
   }
+
+  describe("Test isOption", () => {
+    it("isOption should return true", () => {
+      expect(isOption(some(2))).toBeTruthy();
+    });
+
+    it("isOption should return true", () => {
+      expect(isOption(none)).toBeTruthy();
+    });
+
+    it("isOption should return false", () => {
+      expect(isOption(2)).toBeFalsy();
+    });
+
+    it("isOption should return false", () => {
+      expect(isOption(ok(2))).toBeFalsy();
+    });
+
+    it("isOption should return false", () => {
+      expect(isOption(err("Error"))).toBeFalsy();
+    });
+  });
+
   describe("Test Some options", () => {
     it("unwrap should return", () => {
       const r = returnsSomeValue();

@@ -13,5 +13,6 @@ export {
   anyResults,
   transposeResult,
   Resultable,
+  isResult,
 } from "./result";
 export { wrap, wrapAsync } from "./utils";
