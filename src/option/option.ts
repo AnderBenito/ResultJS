@@ -62,7 +62,7 @@ export interface Optionable<T> {
    */
   filter(f: (val: T) => boolean): Option<T>;
   /**
-   * Returns `Some([s, o])` if this is `Some(s)` and the provided Option value is `Some(o)`; otherwise, returns `None`
+   * Returns `Some([x, y])` if this is `Some(x)` and the provided Option value is `Some(y)`; otherwise, returns `None`
    */
   zip<U>(other: Option<U>): Option<[T, U]>;
   /**
