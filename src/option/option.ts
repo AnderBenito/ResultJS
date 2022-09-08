@@ -48,11 +48,15 @@ export interface Optionable<T> {
    */
   unwrapOrUndefined(): T | undefined;
   /**
-   * Transforms `Option<T>` to `Result<T, E>`
+   * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and None to `Err(err)`.
    *
-   * Transforms `Some(v)` to `Ok(v)`, and `None` to `Err(err)` using the provided default err value
+   * Arguments passed to `okOr` are eagerly evaluated; if you are passing the result of a function call, it is recommended to use `okOrElse`, which is lazily evaluated.
    */
   okOr<E>(err: E): Result<T, E>;
+  /**
+   * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and None to `Err(f())`.
+   */
+  okOrElse<E>(f: () => E): Result<T, E>;
   /**
    * Transforms `Option<T>` to `Option<U>` by applying the provided function `f` to the contained value of `Some` and leaving `None` values unchanged
    */
@@ -143,6 +147,9 @@ export class Some<T> implements Optionable<T> {
   okOr(): Ok<T> {
     return ok(this.value);
   }
+  okOrElse(): Ok<T> {
+    return ok(this.value);
+  }
   map<U>(f: (val: T) => U): Some<U> {
     return some(f(this.value));
   }
@@ -206,6 +213,9 @@ export class None implements Optionable<never> {
   }
   okOr<E>(error: E): Err<E> {
     return err(error);
+  }
+  okOrElse<E>(f: () => E): Err<E> {
+    return err(f());
   }
   map(): None {
     return none();

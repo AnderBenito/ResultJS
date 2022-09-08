@@ -201,6 +201,22 @@ describe("Options test", () => {
 
       expect(combined.unwrap()).toBe(SOME_VALUE);
     });
+
+    it("okOr() should return Ok(t)", () => {
+      const opt = returnsSomeValue();
+
+      const r = opt.okOr("Oops!");
+
+      expect(r.unwrap()).toBe(SOME_VALUE);
+    });
+
+    it("okOrElse() should return Ok(t)", () => {
+      const opt = returnsSomeValue();
+
+      const r = opt.okOrElse(() => "Oops!");
+
+      expect(r.unwrap()).toBe(SOME_VALUE);
+    });
   });
 
   describe("Test None options", () => {
@@ -360,6 +376,28 @@ describe("Options test", () => {
       const combined = r.orElse(() => none());
 
       expect(combined.isNone()).toBeTruthy();
+    });
+
+    it("okOr() should return Err(e)", () => {
+      const opt = returnsNone();
+
+      const r = opt.okOr("Oops!");
+
+      expect(r.isErr()).toBeTruthy();
+      if (r.isErr()) {
+        expect(r.getErr()).toBe("Oops!");
+      }
+    });
+
+    it("okOrElse() should return Err(e)", () => {
+      const opt = returnsNone();
+
+      const r = opt.okOrElse(() => "Oops!");
+
+      expect(r.isErr()).toBeTruthy();
+      if (r.isErr()) {
+        expect(r.getErr()).toBe("Oops!");
+      }
     });
   });
 });
