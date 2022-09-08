@@ -324,6 +324,14 @@ To create a `None` option:
 const noneValue = none();
 ```
 
+To create an `Option` from a value that you don't know if it's actually defined or not use the `optionFrom` function:
+
+```ts
+const possiblyUndefinedValue = suspiciousFunction();
+
+const option = optionFrom(possiblyUndefinedValue);
+```
+
 #### Type safety and Narrowing
 
 Let's say we are working with a `Option<number>`:

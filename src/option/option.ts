@@ -248,8 +248,17 @@ export class None implements Optionable<never> {
 }
 
 const _none: None = new None();
+/**
+ * Creates an `Option` of `Some(val)` value
+ */
 export const some = <T>(val: T): Some<T> => new Some(val);
+/**
+ * Creates an `Option` of `None` value
+ */
 export const none = () => _none;
+/**
+ * Creates an `Option` of `Some(val)` if `val` is defined. If `val` is undefined or null creates a `None` value.
+ */
 export const optionFrom = <T>(val?: T): Option<T> =>
   hasValue(val) ? some(val) : none();
 

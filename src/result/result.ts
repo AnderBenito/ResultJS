@@ -186,7 +186,13 @@ export class Err<E> implements Resultable<never, E> {
   }
 }
 
+/**
+ * Creates a `Result` of `Ok(val)` value
+ */
 export const ok = <T>(val: T): Ok<T> => new Ok(val);
+/**
+ * Creates a `Result` of `Err(err)` value
+ */
 export const err = <E>(err: E): Err<E> => new Err<E>(err);
 
 /**
