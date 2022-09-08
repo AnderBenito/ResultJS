@@ -44,13 +44,13 @@ Error and optional values control flow library based on Rust's [Result](https://
 ## Installation
 
 ```
-$ npm install resultjs
+$ npm install rustflow
 ```
 
 or
 
 ```
-$ yarn add resultjs
+$ yarn add rustflow
 ```
 
 ## Usage
