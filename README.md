@@ -1,41 +1,45 @@
-# ResultJS
+# RustFlow
 
-- [ResultJS](#resultjs)
-  * [Installation](#installation)
-  * [Usage](#usage)
-    + [Result](#result)
-      - [Creation](#creation)
-      - [Type safety and Narrowing](#type-safety-and-narrowing)
-      - [Unwrap](#unwrap)
-      - [UnwrapOr](#unwrapor)
-      - [UnwrapOrElse](#unwraporelse)
-      - [Map](#map)
-      - [MapErr](#maperr)
-      - [AndThen](#andthen)
-      - [OrElse](#orelse)
-      - [Ok method](#ok-method)
-      - [Err method](#err-method)
-      - [And operator method](#and-operator-method)
-      - [Or operator method](#or-operator-method)
-    + [Option](#option)
-      - [Creation](#creation-1)
-      - [Type safety and Narrowing](#type-safety-and-narrowing-1)
-      - [Unwrap](#unwrap-1)
-      - [Expect](#expect)
-      - [UnwrapOr](#unwrapor-1)
-      - [UnwrapOrElse](#unwraporelse-1)
-      - [OkOr](#okor)
-      - [Map](#map-1)
-      - [Filter](#filter)
-      - [AndThen](#andthen-1)
-      - [OrElse](#orelse-1)
-      - [Zip](#zip)
-      - [Flatten](#flatten)
-      - [And operator method](#and-operator-method-1)
-      - [Or operator method](#or-operator-method-1)
-      - [Xor operator method](#xor-operator-method)
-  * [Motivation](#motivation)
-    + [Custom error types](#custom-error-types)
+Error and optional values control flow library based on Rust's [Result](https://doc.rust-lang.org/std/result/) and [Option](https://doc.rust-lang.org/std/option/).
+
+## Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+  * [Result](#result)
+    + [Creation](#creation)
+    + [Type safety and Narrowing](#type-safety-and-narrowing)
+    + [Unwrap](#unwrap)
+    + [UnwrapOr](#unwrapor)
+    + [UnwrapOrElse](#unwraporelse)
+    + [Map](#map)
+    + [MapErr](#maperr)
+    + [AndThen](#andthen)
+    + [OrElse](#orelse)
+    + [Ok method](#ok-method)
+    + [Err method](#err-method)
+    + [And operator method](#and-operator-method)
+    + [Or operator method](#or-operator-method)
+  * [Option](#option)
+    + [Creation](#creation-1)
+    + [Type safety and Narrowing](#type-safety-and-narrowing-1)
+    + [Unwrap](#unwrap-1)
+    + [Expect](#expect)
+    + [UnwrapOr](#unwrapor-1)
+    + [UnwrapOrElse](#unwraporelse-1)
+    + [OkOr](#okor)
+    + [OkOrElse](#okorelse)
+    + [Map](#map-1)
+    + [Filter](#filter)
+    + [AndThen](#andthen-1)
+    + [OrElse](#orelse-1)
+    + [Zip](#zip)
+    + [Flatten](#flatten)
+    + [And operator method](#and-operator-method-1)
+    + [Or operator method](#or-operator-method-1)
+    + [Xor operator method](#xor-operator-method)
+- [Motivation](#motivation)
+  * [Custom error types](#custom-error-types)
 
 ## Installation
 
@@ -407,7 +411,9 @@ console.log(noneValue); // Prints 2
 
 #### OkOr
 
-Transforms an `Option<T>` to a `Result<T, E>`. Mapping `Some(v)` to `Ok(v)`, and `None` to `Err(err)` using the provided default err value.
+The `okOr` method transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and None to `Err(err)`.
+
+Arguments passed to `okOr` are eagerly evaluated; if you are passing the result of a function call, it is recommended to use `okOrElse`, which is lazily evaluated.
 
 ```ts
 const someOption = ok(1);
@@ -417,6 +423,21 @@ const okResult: Result<number, string> = someOption.okOr("an error");
 console.log(okResult.unwrap()); // Prints 1
 
 const noneValue: Result<number, string> = noneOption.okOr("an error");
+console.log(noneValue.unwrap()); // Throws "an error"
+```
+
+#### OkOrElse
+
+The `okOrElse` method transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and None to `Err(f())`.
+
+```ts
+const someOption = ok(1);
+const noneOption = none();
+
+const okResult: Result<number, string> = someOption.okOrElse(() => "an error");
+console.log(okResult.unwrap()); // Prints 1
+
+const noneValue: Result<number, string> = noneOption.okOrElse(() => "an error");
 console.log(noneValue.unwrap()); // Throws "an error"
 ```
 
