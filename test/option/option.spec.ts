@@ -1,4 +1,4 @@
-import { some, none, Option, isOption, ok, err } from "../../src";
+import { some, none, Option, isOption, ok, err, optionFrom } from "../../src";
 
 describe("Options test", () => {
   const SOME_VALUE = 10;
@@ -29,6 +29,18 @@ describe("Options test", () => {
   });
 
   describe("Test Some options", () => {
+    it("optionFrom should return Some", () => {
+      const opt = optionFrom(2);
+
+      expect(opt.isSome()).toBeTruthy();
+    });
+
+    it("optionFrom should return None", () => {
+      const opt = optionFrom<number>(null);
+
+      expect(opt.isNone()).toBeTruthy();
+    });
+
     it("unwrap should return", () => {
       const r = returnsSomeValue();
 
