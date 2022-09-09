@@ -1,13 +1,13 @@
 {
-  "name": "rustflow",
+  "name": "rorjs",
   "version": "1.0.0",
   "description": "Error and optional values control flow library based on Rust's Result and Option.",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-  "homepage": "https://github.com/AnderBenito/RustFlow",
-  "repository": "git@github.com:AnderBenito/RustFlow.git",
+  "homepage": "https://github.com/AnderBenito/rorjs",
+  "repository": "git@github.com:AnderBenito/rorjs.git",
   "bugs": {
-    "url": "https://github.com/AnderBenito/RustFlow/issues",
+    "url": "https://github.com/AnderBenito/rorjs/issues",
     "email": "anderbenito96@gmail.com"
   },
   "files": [

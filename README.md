@@ -1,6 +1,6 @@
-# RustFlow
+# rorjs
 
-Error and optional values control flow library based on Rust's [Result](https://doc.rust-lang.org/std/result/) and [Option](https://doc.rust-lang.org/std/option/).
+Typescript implementation for Option and Result based on Rust's [Result](https://doc.rust-lang.org/std/result/) and [Option](https://doc.rust-lang.org/std/option/).
 
 ## Contents
 
@@ -44,13 +44,13 @@ Error and optional values control flow library based on Rust's [Result](https://
 ## Installation
 
 ```
-$ npm install rustflow
+$ npm install rorjs
 ```
 
 or
 
 ```
-$ yarn add rustflow
+$ yarn add rorjs
 ```
 
 ## Usage
