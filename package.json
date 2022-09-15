@@ -1,9 +1,9 @@
 {
   "name": "rorjs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Error and optional values control flow library based on Rust's Result and Option.",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "homepage": "https://github.com/AnderBenito/rorjs",
   "repository": "git@github.com:AnderBenito/rorjs.git",
   "bugs": {
@@ -11,11 +11,11 @@
     "email": "anderbenito96@gmail.com"
   },
   "files": [
-		"/dist"
-	],
+    "/dist"
+  ],
   "scripts": {
     "clean": "rm -rf ./dist",
-		"build": "npm run clean && tsc --project tsconfig.build.json",
+    "build": "npm run clean && tsc --project tsconfig.build.json",
     "test": "jest"
   },
   "devDependencies": {
