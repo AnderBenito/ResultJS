@@ -198,6 +198,22 @@ describe("Options test", () => {
       expect(combined.isNone()).toBeTruthy();
     });
 
+    it("andThenAsync() with (val) => Some(t) should return Some(t)", async () => {
+      const r = returnsSomeValue();
+
+      const combined = await r.andThenAsync(async (val) => some(val + 1));
+
+      expect(combined.unwrap()).toBe(SOME_VALUE + 1);
+    });
+
+    it("andThenAsync() with (val) => None should return None", async () => {
+      const r = returnsSomeValue();
+
+      const combined = await r.andThenAsync(async () => none());
+
+      expect(combined.isNone()).toBeTruthy();
+    });
+
     it("orElse() with () => Some(t) should return Some(x)", () => {
       const r = returnsSomeValue();
 
@@ -210,6 +226,22 @@ describe("Options test", () => {
       const r = returnsSomeValue();
 
       const combined = r.orElse(() => none());
+
+      expect(combined.unwrap()).toBe(SOME_VALUE);
+    });
+
+    it("orElseAsync() with () => Some(t) should return Some(x)", async () => {
+      const r = returnsSomeValue();
+
+      const combined = await r.orElseAsync(async () => some("hello"));
+
+      expect(combined.unwrap()).toBe(SOME_VALUE);
+    });
+
+    it("orElseAsync() with () => None should return Some(x)", async () => {
+      const r = returnsSomeValue();
+
+      const combined = await r.orElseAsync(async () => none());
 
       expect(combined.unwrap()).toBe(SOME_VALUE);
     });

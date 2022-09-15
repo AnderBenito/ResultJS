@@ -81,13 +81,29 @@ export interface Resultable<T, E> {
    *
    * This function can be used for control flow based on Result values.
    */
-  andThen<U>(f: (val: T) => Result<U, E>): Result<U, E>;
+  andThen<U, F>(f: (val: T) => Result<U, F>): Result<U, E | F>;
+  /**
+   * Calls async `f` if the result is `Ok`, otherwise returns the `Err` value of self.
+   *
+   * This function can be used for control flow based on Result values.
+   */
+  andThenAsync<U, F>(
+    f: (val: T) => Promise<Result<U, F>>
+  ): Promise<Result<U, E | F>>;
   /**
    * Calls `f` if the result is `Err`, otherwise returns the `Ok` value of self.
    *
    * This function can be used for control flow based on result values.
    */
-  orElse<F>(f: (error: E) => Result<T, F>): Result<T, F>;
+  orElse<U, F>(f: (error: E) => Result<U, F>): Result<T | U, F>;
+  /**
+   * Calls async `f` if the result is `Err`, otherwise returns the `Ok` value of self.
+   *
+   * This function can be used for control flow based on result values.
+   */
+  orElseAsync<U, F>(
+    f: (error: E) => Promise<Result<U, F>>
+  ): Promise<Result<T | U, F>>;
 }
 
 export type Result<T, E> = Ok<T> | Err<E>;
@@ -134,7 +150,15 @@ export class Ok<T> implements Resultable<T, never> {
   andThen<U, E>(f: (val: T) => Result<U, E>): Result<U, E> {
     return f(this.val);
   }
+  andThenAsync<U, F>(
+    f: (val: T) => Promise<Result<U, F>>
+  ): Promise<Result<U, F>> {
+    return f(this.val);
+  }
   orElse(): Ok<T> {
+    return this;
+  }
+  async orElseAsync(): Promise<Ok<T>> {
     return this;
   }
 }
@@ -181,7 +205,15 @@ export class Err<E> implements Resultable<never, E> {
   andThen(): Err<E> {
     return this;
   }
-  orElse<T, F>(f: (error: E) => Result<T, F>): Result<T, F> {
+  async andThenAsync(): Promise<Err<E>> {
+    return this;
+  }
+  orElse<U, F>(f: (error: E) => Result<U, F>): Result<U, F> {
+    return f(this.error);
+  }
+  async orElseAsync<U, F>(
+    f: (error: E) => Promise<Result<U, F>>
+  ): Promise<Result<U, F>> {
     return f(this.error);
   }
 }

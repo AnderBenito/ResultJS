@@ -111,9 +111,19 @@ export interface Optionable<T> {
    */
   andThen<U>(f: (val: T) => Option<U>): Option<U>;
   /**
+   * Returns `None` if the option is `None`, otherwise calls `f` with the wrapped value and returns the result.
+   *
+   * Some languages call this operation flatmap.
+   */
+  andThenAsync<U>(f: (val: T) => Promise<Option<U>>): Promise<Option<U>>;
+  /**
    * Returns the option if it contains a value, otherwise calls `f` and returns the result.
    */
-  orElse(f: () => Option<T>): Option<T>;
+  orElse<U>(f: () => Option<U>): Option<T | U>;
+  /**
+   * Returns the option if it contains a value, otherwise calls `f` and returns the result.
+   */
+  orElseAsync<U>(f: () => Promise<Option<T>>): Promise<Option<T | U>>;
 }
 
 // The Option<T> type is a superposition of SomeOption and a Optionable<never> (that has no value)
@@ -184,7 +194,13 @@ export class Some<T> implements Optionable<T> {
   andThen<U>(f: (val: T) => Option<U>): Option<U> {
     return f(this.value);
   }
+  andThenAsync<U>(f: (val: T) => Promise<Option<U>>): Promise<Option<U>> {
+    return f(this.value);
+  }
   orElse(): Some<T> {
+    return this;
+  }
+  async orElseAsync(): Promise<Some<T>> {
     return this;
   }
 }
@@ -242,7 +258,13 @@ export class None implements Optionable<never> {
   andThen(): None {
     return this;
   }
-  orElse<T>(f: () => Option<T>): Option<T> {
+  async andThenAsync(): Promise<None> {
+    return this;
+  }
+  orElse<U>(f: () => Option<U>): Option<U> {
+    return f();
+  }
+  orElseAsync<U>(f: () => Promise<Option<U>>): Promise<Option<U>> {
     return f();
   }
 }

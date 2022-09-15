@@ -153,6 +153,25 @@ describe("Result test", () => {
       }
     });
 
+    it("andThenAsync() with (val) => Ok(y) should return Ok(y)", async () => {
+      const r = returnsOk();
+
+      const combined = await r.andThenAsync(async (val) => ok(val + 1));
+
+      expect(combined.unwrap()).toBe(OK_VALUE + 1);
+    });
+
+    it("andThenAsync() with (val) => Err(f) should return Err(f)", async () => {
+      const r = returnsOk();
+
+      const combined = await r.andThenAsync(async () => err("another error"));
+
+      expect(combined.isErr()).toBeTruthy();
+      if (combined.isErr()) {
+        expect(combined.getErr()).toBe("another error");
+      }
+    });
+
     it("orElse() with () => Ok(y) should return Ok(x)", () => {
       const r = returnsOk();
 
@@ -165,6 +184,22 @@ describe("Result test", () => {
       const r = returnsOk();
 
       const combined = r.orElse(() => err("another error"));
+
+      expect(combined.unwrap()).toBe(OK_VALUE);
+    });
+
+    it("orElseAsync() with () => Ok(y) should return Ok(x)", async () => {
+      const r = returnsOk();
+
+      const combined = await r.orElseAsync(async () => ok("hello"));
+
+      expect(combined.unwrap()).toBe(OK_VALUE);
+    });
+
+    it("orElseAsync() with () => Err(f) should return Ok(x)", async () => {
+      const r = returnsOk();
+
+      const combined = await r.orElseAsync(async () => err("another error"));
 
       expect(combined.unwrap()).toBe(OK_VALUE);
     });
