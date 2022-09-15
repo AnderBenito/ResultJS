@@ -286,6 +286,11 @@ export const optionFrom = <T>(val?: T): Option<T> =>
 
 const hasValue = <T>(val?: T): val is T => val !== undefined && val !== null;
 
+/**
+ * Transforms a `Option` of a `Result` into an `Result` of an `Option`
+ *
+ * `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will be mapped to `Ok(Some(_))` and `Err(_)`.
+ */
 export const transposeOption = <T, E>(
   option: Option<Result<T, E>>
 ): Result<Option<T>, E> => {

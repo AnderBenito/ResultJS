@@ -15,11 +15,18 @@ Typescript implementation for Option and Result based on Rust's [Result](https:/
     + [Map](#map)
     + [MapErr](#maperr)
     + [AndThen](#andthen)
+    + [AndThenAsync](#andthenasync)
     + [OrElse](#orelse)
+    + [OrElseAsync](#orelseasync)
     + [Ok method](#ok-method)
     + [Err method](#err-method)
     + [And operator method](#and-operator-method)
     + [Or operator method](#or-operator-method)
+    + [transposeResult](#transposeresult)
+    + [Result combinator functions](#result-combinator-functions)
+      - [allResults](#allresults)
+      - [anyResults](#anyresults)
+      - [tryAllResults](#tryallresults)
   * [Option](#option)
     + [Creation](#creation-1)
     + [Type safety and Narrowing](#type-safety-and-narrowing-1)
@@ -32,12 +39,18 @@ Typescript implementation for Option and Result based on Rust's [Result](https:/
     + [Map](#map-1)
     + [Filter](#filter)
     + [AndThen](#andthen-1)
+    + [AndThenAsync](#andthenasync-1)
     + [OrElse](#orelse-1)
+    + [OrElseAsync](#orelseasync-1)
     + [Zip](#zip)
     + [Flatten](#flatten)
     + [And operator method](#and-operator-method-1)
     + [Or operator method](#or-operator-method-1)
     + [Xor operator method](#xor-operator-method)
+    + [transposeOption](#transposeoption)
+    + [Option combinator functions](#option-combinator-functions)
+      - [allOptions](#alloptions)
+      - [anyOptions](#anyoptions)
 - [Motivation](#motivation)
   * [Custom error types](#custom-error-types)
 
@@ -214,6 +227,11 @@ const x = err("early error");
 x.andThen(() => err("late error")).unwrap() // Throws "early error"
 ```
 
+#### AndThenAsync
+
+The `andThenAsync` is analogous to `andThen` method but taking an async function and returning a `Promise`.
+
+
 #### OrElse
 
 The `orElse` calls `f` if the result is `Err`, otherwise returns the `Ok` value of self.
@@ -233,6 +251,10 @@ x.orElse((err) => ok(1)).unwrap() // Yields 1
 const x = err("early error");
 x.orElse((err) => err("late error")).unwrap() // Throws "late error"
 ```
+
+#### OrElseAsync
+
+The `orElseAsync` is analogous to `orElse` method but taking an async function and returning a `Promise`.
 
 #### Ok method
 
@@ -304,6 +326,93 @@ x.or(y).unwrap() // Throws "late error"
 const x = ok(2);
 const y = ok("hello world");
 x.or(y).unwrap() // Yields 2
+```
+
+#### transposeResult
+
+The `transposeResult` function transforms a `Result` of an `Option` into an `Option` of a `Result`.
+
+`Ok(None)` will be mapped to `None`. `Ok(Some(_))` and `Err(_)` will be mapped to `Some(Ok(_))` and `Some(Err(_))`.
+
+ ```ts
+ const r = ok(some(2));
+ const o = transposeResult(r);
+ // Yields Some(Ok(2))
+
+ const r = ok(none());
+ const o = transposeResult(r);
+ // Yields None
+
+ const r = err(some("error"));
+ const o = transposeResult(r);
+ // Yields Some(Err("error"))
+ ```
+
+#### Result combinator functions
+
+These functions combine multiple `Result`'s into a single `Result` output
+
+##### allResults
+
+The `allResults` function evaluates a set of `Result`s. Returns an `Ok` with all `Ok` values if there is no `Error`. Returns `Error` with the first evaluated error result.
+
+```ts
+const x = ok(2);
+const y = ok("hello");
+const z = ok({ foo: "bar" });
+allResults(x, y, z) // Yields Ok<[2, "hello", { foo: "bar" }]>
+
+const x = ok(2);
+const y = ok("hello");
+const z = err("late error");
+allResults(x, y, z) // Yields Err<"late error">
+
+const x = err("early error");
+const y = ok(2);
+const z = err("late error");
+allResults(x, y, z) // Yields Err<"early error">
+```
+
+##### anyResults
+
+The `anyResults` function evaluates a set of `Result`s. Returns an `Ok` with the first result evaluated is `Ok`. If no `Ok` is found, returns an `Error` containing the collected error values.
+
+```ts
+const x = ok(2);
+const y = ok("hello");
+const z = ok({ foo: "bar" });
+anyResults(x, y, z) // Yields Ok<2>
+
+const x = err("early error");
+const y = ok("hello");
+const z = ok(2);
+anyResults(x, y, z) // Yields Ok<"hello">
+
+const x = err("early error");
+const y = err("oops");
+const z = err("late error");
+anyResults(x, y, z) // Yields Err<["early error", "oops", "late error"]>
+```
+
+##### tryAllResults
+
+The `tryAllResults` function is a little bit more especial. valuates a set of `Result`s wether they are `Err` or `Ok`. Returns an array of `Option`s with all encountered `Err`. If all values are `Ok`, returns a tuple combining all values.
+
+```ts
+const x = ok(2);
+const y = ok("hello");
+const z = ok({ foo: "bar" });
+anyResults(x, y, z) // Yields Ok<[2, "hello", { foo: "bar" }]>
+
+const x = ok("hello");
+const y = err("early error");
+const z = ok(2);
+anyResults(x, y, z) // Yields Err<[None, Some<"early error">, None]>
+
+const x = err("early error");
+const y = err("oops");
+const z = err("late error");
+anyResults(x, y, z) // Yields Err<[Some<"early error">, Some<"oops">, Some<"late error">]>
 ```
 
 ### Option
@@ -509,6 +618,10 @@ const x = none();
 x.andThen(() => none()).unwrap() // Throws OptionUnwrapError
 ```
 
+#### AndThenAsync
+
+The `andThenAsync` is analogous to `andThen` method but taking an async function and returning a `Promise`.
+
 #### OrElse
 
 The `orElse` returns the option if it contains a value, otherwise calls `f` and returns the result.
@@ -526,6 +639,10 @@ x.orElse(() => some(1)).unwrap() // Yields 1
 const x = none();
 x.orElse(() => none()).unwrap() // Throws OptionUnwrapError
 ```
+
+#### OrElseAsync
+
+The `orElseAsync` is analogous to `orElse` method but taking an async function and returning a `Promise`.
 
 #### Zip
 
@@ -628,6 +745,72 @@ x.xor(y).unwrap() // Throws "late error"
 const x = some(2);
 const y = some("hello world");
 x.xor(y).unwrap() // Throws "late error"
+```
+
+#### transposeOption
+
+The `transposeOption` function transforms a `Option` of a `Result` into an `Result` of an `Option`.
+
+`None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will be mapped to `Ok(Some(_))` and `Err(_)`.
+
+ ```ts
+ const r = some(ok(2));
+ const o = transposeOption(r);
+ // Yields Ok(Some(2))
+
+ const r = some(err("error"));
+ const o = transposeOption(r);
+ // Yields Err("error")
+
+ const r = none();
+ const o = transposeOption(r);
+ // Yields Ok(None)
+ ```
+
+#### Option combinator functions
+
+These functions combine multiple `Option`'s into a single `Option` output
+
+##### allOptions
+
+The `allOptions` function evaluates a set of `Option`s. Returns a `Some` with all `Some` values if there is no `None`. Returns `None` with the first evaluated `None` result.
+
+```ts
+const x = some(2);
+const y = some("hello");
+const z = some({ foo: "bar" });
+allOptions(x, y, z) // Yields Some<[2, "hello", { foo: "bar" }]>
+
+const x = some(2);
+const y = some("hello");
+const z = none();
+allOptions(x, y, z) // Yields None
+
+const x = none();
+const y = some(2);
+const z = none();
+allOptions(x, y, z) // Yields None
+```
+
+##### anyOptions
+
+The `anyOptions` function evaluates a set of `Result`s. Returns a `Some` with the first evaluated `Some`value. Returns `None` if no `Some` values are found.
+
+```ts
+const x = some(2);
+const y = some("hello");
+const z = some({ foo: "bar" });
+anyOptions(x, y, z) // Yields Some<2>
+
+const x = none();
+const y = some("hello");
+const z = some(2);
+anyOptions(x, y, z) // Yields Some<"hello">
+
+const x = none();
+const y = none();
+const z = none();
+anyOptions(x, y, z) // Yields None
 ```
 
 ## Motivation
