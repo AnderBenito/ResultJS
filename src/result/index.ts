@@ -14,5 +14,6 @@ export {
   transposeResult,
   Resultable,
   isResult,
+  ResultPromise,
 } from "./result";
 export { wrap, wrapAsync } from "./utils";

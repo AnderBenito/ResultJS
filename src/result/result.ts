@@ -106,14 +106,6 @@ export interface Resultable<T, E> {
   ): ResultPromise<Result<T | U, F>>;
 }
 
-export interface ResultablePromise<R extends Result<any, any>>
-  extends Promise<R> {
-  map<U>(f: (val: ResultOkType<R>) => U): Promise<Result<U, ResultErrType<R>>>;
-  andThenAsync<U, F>(
-    f: (val: ResultOkType<R>) => Promise<Result<U, F>>
-  ): ResultPromise<Result<U, ResultErrType<R> | F>>;
-}
-
 export type Result<T, E> = Ok<T> | Err<E>;
 
 export class Ok<T> implements Resultable<T, never> {
@@ -155,18 +147,18 @@ export class Ok<T> implements Resultable<T, never> {
   or(): Ok<T> {
     return this;
   }
-  andThen<U, E>(f: (val: T) => Result<U, E>): Result<U, E> {
+  andThen<U, F>(f: (val: T) => Result<U, F>): Result<U, F> {
     return f(this.val);
   }
   andThenAsync<U, F>(
     f: (val: T) => Promise<Result<U, F>>
   ): ResultPromise<Result<U, F>> {
-    return new ResultPromise(f(this.val));
+    return new ResultPromise(f(this.val).catch(err));
   }
-  orElse(): Ok<T> {
+  orElse<U, F>(): Result<T | U, F> {
     return this;
   }
-  orElseAsync(): ResultPromise<Ok<T>> {
+  orElseAsync<U, F>(): ResultPromise<Result<T | U, F>> {
     return new ResultPromise(Promise.resolve(this));
   }
 }
@@ -210,50 +202,49 @@ export class Err<E> implements Resultable<never, E> {
   or<U, F>(res: Result<U, F>): Result<U, F> {
     return res;
   }
-  andThen(): Err<E> {
+  andThen<U, F>(): Result<U, E | F> {
     return this;
   }
-  andThenAsync(): ResultPromise<Err<E>> {
+  andThenAsync<U, F>(): ResultPromise<Result<U, E | F>> {
     return new ResultPromise(Promise.resolve(this));
-  }
-  orElse<U, F>(f: (error: E) => Result<U, F>): Result<U, F> {
-    return f(this.error);
   }
   orElseAsync<U, F>(
     f: (error: E) => Promise<Result<U, F>>
   ): ResultPromise<Result<U, F>> {
-    return new ResultPromise(f(this.error));
+    return new ResultPromise(f(this.error).catch(err));
+  }
+  orElse<U, F>(f: (error: E) => Result<U, F>): Result<U, F> {
+    return f(this.error);
   }
 }
 
-export class ResultPromise<T extends Result<any, any>>
-  implements ResultablePromise<T>
-{
+export class ResultPromise<T extends Result<any, any>> implements Promise<T> {
   constructor(public readonly promise: Promise<T>) {}
   then<TResult1 = T, TResult2 = never>(
     onfulfilled?: (value: T) => TResult1 | PromiseLike<TResult1>,
     onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>
   ): Promise<TResult1 | TResult2> {
-    throw new Error("Method not implemented.");
+    return this.promise.then(onfulfilled, onrejected);
   }
   catch<TResult = never>(
     onrejected?: (reason: any) => TResult | PromiseLike<TResult>
   ): Promise<T | TResult> {
-    throw new Error("Method not implemented.");
+    return this.promise.catch(onrejected);
   }
   finally(onfinally?: () => void): Promise<T> {
-    throw new Error("Method not implemented.");
+    return this.promise.finally(onfinally);
   }
   [Symbol.toStringTag]: string;
 
-  [Symbol.toStringTag]: string;
-  unwrap(): Promise<T> {
+  unwrap(): Promise<ResultOkType<T>> {
     return this.promise.then((p) => p.unwrap());
   }
-  unwrapOr(val: T): Promise<T> {
+  unwrapOr(val: ResultOkType<T>): Promise<ResultOkType<T>> {
     return this.promise.then((p) => p.unwrapOr(val));
   }
-  unwrapOrElse(f: (err: ResultErrType<T>) => T): Promise<T> {
+  unwrapOrElse(
+    f: (err: ResultErrType<T>) => ResultOkType<T>
+  ): Promise<ResultOkType<T>> {
     return this.promise.then((p) => p.unwrapOrElse(f));
   }
   map<U>(
@@ -261,22 +252,30 @@ export class ResultPromise<T extends Result<any, any>>
   ): ResultPromise<Result<U, ResultErrType<T>>> {
     return new ResultPromise(this.promise.then((p) => p.map(f)));
   }
+  err(): Promise<Option<ResultErrType<T>>> {
+    return this.promise.then((p) => p.err());
+  }
+  ok(): Promise<Option<ResultOkType<T>>> {
+    return this.promise.then((p) => p.ok());
+  }
+  and<U, F>(res: Result<U, F>): ResultPromise<Result<U, ResultErrType<T> | F>> {
+    return new ResultPromise(this.promise.then((p) => p.and(res)));
+  }
+  or<U, F>(res: Result<U, F>): ResultPromise<Result<ResultOkType<T> | U, F>> {
+    return new ResultPromise(this.promise.then((p) => p.or(res)));
+  }
   mapErr<F>(f: (err: ResultErrType<T>) => F): ResultPromise<Result<T, F>> {
     return new ResultPromise(this.promise.then((p) => p.mapErr(f)));
   }
   andThen<U, F>(
-    f: (val: T) => Result<U, F>
+    f: (val: ResultOkType<T>) => Result<U, F>
   ): ResultPromise<Result<U, ResultErrType<T> | F>> {
     return new ResultPromise(this.promise.then((p) => p.andThen(f)));
   }
   andThenAsync<U, F>(
     f: (val: ResultOkType<T>) => Promise<Result<U, F>>
   ): ResultPromise<Result<U, ResultErrType<T> | F>> {
-    const s = (async () => {
-      const r = await this.promise;
-      return r.andThenAsync(f).promise;
-    })();
-    return new ResultPromise(s as Promise<Result<U, ResultErrType<T> | F>>);
+    return new ResultPromise(this.promise.then((p) => p.andThenAsync(f)));
   }
   orElse<U, F>(
     f: (error: ResultErrType<T>) => Result<U, F>
@@ -286,11 +285,7 @@ export class ResultPromise<T extends Result<any, any>>
   orElseAsync<U, F>(
     f: (error: ResultErrType<T>) => Promise<Result<U, F>>
   ): ResultPromise<Result<ResultOkType<T> | U, F>> {
-    const s = (async () => {
-      const r = await this.promise;
-      return r.orElseAsync(f).promise;
-    })();
-    return new ResultPromise(s as Promise<Result<ResultOkType<T> | U, F>>);
+    return new ResultPromise(this.promise.then((p) => p.orElseAsync(f)));
   }
 }
 /**
