@@ -1,4 +1,4 @@
-import { Err, err, Ok, ok, Result } from "../result";
+import { Err, err, Ok, ok, Result, ResultPromise } from "../result";
 
 export class OptionUnwrapError extends Error {
   constructor() {
@@ -62,6 +62,10 @@ export interface Optionable<T> {
    */
   map<U>(f: (val: T) => U): Option<U>;
   /**
+   * Transforms `Option<T>` to `OptionPromise<U>` by applying the provided function `f` to the contained value of `Some` and leaving `None` values unchanged
+   */
+  mapAsync<U>(f: (val: T) => Promise<U>): OptionPromise<U>;
+  /**
    * Calls the provided predicate function `f` on the contained value `t` if the `Option` is `Some(t)`, and returns `Some(t)` if the function returns true; otherwise, returns `None`
    */
   filter(f: (val: T) => boolean): Option<T>;
@@ -115,15 +119,15 @@ export interface Optionable<T> {
    *
    * Some languages call this operation flatmap.
    */
-  andThenAsync<U>(f: (val: T) => Promise<Option<U>>): Promise<Option<U>>;
+  andThenAsync<U>(f: (val: T) => Promise<Option<U>>): OptionPromise<U>;
   /**
    * Returns the option if it contains a value, otherwise calls `f` and returns the result.
    */
   orElse<U>(f: () => Option<U>): Option<T | U>;
   /**
-   * Returns the option if it contains a value, otherwise calls `f` and returns the result.
+   * Returns the option if it contains a value, otherwise calls async `f` and returns the result.
    */
-  orElseAsync<U>(f: () => Promise<Option<T>>): Promise<Option<T | U>>;
+  orElseAsync<U>(f: () => Promise<Option<U>>): OptionPromise<T | U>;
 }
 
 // The Option<T> type is a superposition of SomeOption and a Optionable<never> (that has no value)
@@ -163,6 +167,9 @@ export class Some<T> implements Optionable<T> {
   map<U>(f: (val: T) => U): Some<U> {
     return some(f(this.value));
   }
+  mapAsync<U>(f: (val: T) => Promise<U>): OptionPromise<U> {
+    return new OptionPromise(f(this.value).then((r) => some(r)));
+  }
   filter(f: (val: T) => boolean): Option<T> {
     if (f(this.value) === true) return this;
     return none();
@@ -194,14 +201,14 @@ export class Some<T> implements Optionable<T> {
   andThen<U>(f: (val: T) => Option<U>): Option<U> {
     return f(this.value);
   }
-  andThenAsync<U>(f: (val: T) => Promise<Option<U>>): Promise<Option<U>> {
-    return f(this.value);
+  andThenAsync<U>(f: (val: T) => Promise<Option<U>>): OptionPromise<U> {
+    return new OptionPromise(f(this.value));
   }
   orElse(): Some<T> {
     return this;
   }
-  async orElseAsync(): Promise<Some<T>> {
-    return this;
+  orElseAsync<U>(): OptionPromise<T | U> {
+    return new OptionPromise(Promise.resolve(this));
   }
 }
 
@@ -236,6 +243,9 @@ export class None implements Optionable<never> {
   map(): None {
     return none();
   }
+  mapAsync<U>(): OptionPromise<U> {
+    return new OptionPromise<never>(Promise.resolve(none()));
+  }
   filter(): None {
     return none();
   }
@@ -258,14 +268,183 @@ export class None implements Optionable<never> {
   andThen(): None {
     return this;
   }
-  async andThenAsync(): Promise<None> {
-    return this;
+  andThenAsync(): OptionPromise<never> {
+    return new OptionPromise<never>(Promise.resolve(this));
   }
   orElse<U>(f: () => Option<U>): Option<U> {
     return f();
   }
-  orElseAsync<U>(f: () => Promise<Option<U>>): Promise<Option<U>> {
-    return f();
+  orElseAsync<U>(f: () => Promise<Option<U>>): OptionPromise<U> {
+    return new OptionPromise(f());
+  }
+}
+
+export class OptionPromise<T> implements Promise<Option<T>> {
+  constructor(readonly promise: Promise<Option<T>>) {}
+  then<TResult1 = Option<T>, TResult2 = never>(
+    onfulfilled?: (value: Option<T>) => TResult1 | PromiseLike<TResult1>,
+    onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>
+  ): Promise<TResult1 | TResult2> {
+    return this.promise.then(onfulfilled, onrejected);
+  }
+  catch<TResult = never>(
+    onrejected?: (reason: any) => TResult | PromiseLike<TResult>
+  ): Promise<Option<T> | TResult> {
+    return this.promise.catch(onrejected);
+  }
+  finally(onfinally?: () => void): Promise<Option<T>> {
+    return this.promise.finally(onfinally);
+  }
+  [Symbol.toStringTag]: string;
+
+  /**
+   * Extract the contained value in `Option<T>` when is `Some`
+   *
+   * If is `None` throws error with custom message `msg`
+   */
+  expect(msg: string): Promise<T> {
+    return this.promise.then((p) => p.expect(msg));
+  }
+  /**
+   * Extract the contained value in `Option<T>` when is `Some`
+   *
+   * If is `None` throws error with generic message
+   */
+  unwrap(): Promise<T> {
+    return this.promise.then((p) => p.unwrap());
+  }
+  /**
+   * Extract the contained value in `Option<T>` when is `Some`
+   *
+   * If is `None` returns the provided default value `val`
+   */
+  unwrapOr(val: T): Promise<T> {
+    return this.promise.then((p) => p.unwrapOr(val));
+  }
+  /**
+   * Extract the contained value in `Option<T>` when is `Some`
+   *
+   * If is `None` returns the result of evaluating the provided function `f`
+   */
+  unwrapOrElse(f: () => T): Promise<T> {
+    return this.promise.then((p) => p.unwrapOrElse(f));
+  }
+  /**
+   * Extract the contained value in `Option<T>` when is `Some`
+   *
+   * If is `None` returns undefined
+   */
+  unwrapOrUndefined(): Promise<T | undefined> {
+    return this.promise.then((p) => p.unwrapOrUndefined());
+  }
+  /**
+   * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and None to `Err(err)`.
+   *
+   * Arguments passed to `okOr` are eagerly evaluated; if you are passing the result of a function call, it is recommended to use `okOrElse`, which is lazily evaluated.
+   */
+  okOr<E>(err: E): ResultPromise<Result<T, E>> {
+    return new ResultPromise(this.promise.then((p) => p.okOr(err)));
+  }
+  /**
+   * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and None to `Err(f())`.
+   */
+  okOrElse<E>(f: () => E): ResultPromise<Result<T, E>> {
+    return new ResultPromise(this.promise.then((p) => p.okOrElse(f)));
+  }
+  /**
+   * Transforms `Option<T>` to `Option<U>` by applying the provided function `f` to the contained value of `Some` and leaving `None` values unchanged
+   */
+  map<U>(f: (val: T) => U): OptionPromise<U> {
+    return new OptionPromise(this.promise.then((p) => p.map(f)));
+  }
+  /**
+   * Transforms `OptionPromise<T>` to `Option<U>` by applying the provided function `f` to the contained value of `Some` and leaving `None` values unchanged
+   */
+  mapAsync<U>(f: (val: T) => Promise<U>): OptionPromise<U> {
+    return new OptionPromise(this.promise.then((p) => p.mapAsync(f)));
+  }
+  /**
+   * Calls the provided predicate function `f` on the contained value `t` if the `Option` is `Some(t)`, and returns `Some(t)` if the function returns true; otherwise, returns `None`
+   */
+  filter(f: (val: T) => boolean): OptionPromise<T> {
+    return new OptionPromise(this.promise.then((p) => p.filter(f)));
+  }
+  /**
+   * Returns `Some([x, y])` if this is `Some(x)` and the provided Option value is `Some(y)`; otherwise, returns `None`
+   */
+  zip<U>(other: Option<U>): OptionPromise<[T, U]> {
+    return new OptionPromise(this.promise.then((p) => p.zip(other)));
+  }
+  /**
+   * Removes one level of nesting from an `Option<Option<T>>`
+   */
+  flatten(): OptionPromise<T extends Option<infer U> ? U : T> {
+    return new OptionPromise(this.promise.then((p) => p.flatten()));
+  }
+  /**
+   * Treat the `Option` as a boolean value, where `Some` acts like true and `None` acts like false.
+   *
+   * Takes another `Option` as input, and produce an `Option` as output. This produces an `Option<U>` value having a different inner type `U` than `Option<T>`.
+   *
+   * @returns `None` if this is `None`
+   * @returns `None` if this is `Some<T>` and optb is `None`
+   * @returns `Some<U>` if this is `Some<T>` and optb is `Some<U>`
+   */
+  and<U>(optb: Option<U>): OptionPromise<U> {
+    return new OptionPromise(this.promise.then((p) => p.and(optb)));
+  }
+  /**
+   * Treat the `Option` as a boolean value, where `Some` acts like true and `None` acts like false.
+   *
+   * Takes another `Option` as input, and produce an `Option` as output.
+   *
+   * @returns `Some<T>` if this is `Some<T>`
+   * @returns `Some<U>` if this is `Some<T>` and optb is `Some<U>`
+   * @returns `None` if this is `None` and optb is `None`
+   */
+  or<U>(optb: Option<U>): OptionPromise<T | U> {
+    return new OptionPromise<T | U>(this.promise.then((p) => p.or(optb)));
+  }
+  /**
+   * Treat the `Option` as a boolean value, where `Some` acts like true and `None` acts like false.
+   *
+   * Takes another `Option` as input, and produce an `Option` as output.
+   *
+   * @returns `None` if this is `None` and optb is `None`
+   * @returns `Some<U>` if this is `None` and optb is `Some<U>`
+   * @returns `Some<T>` if this is `Some<T>` and optb is `None`
+   * @returns `None` if this is `Some<T>` and optb is `Some<U>`
+   */
+  xor<U>(optb: Option<U>): OptionPromise<T | U> {
+    return new OptionPromise<T | U>(this.promise.then((p) => p.xor(optb)));
+  }
+  /**
+   * Returns `None` if the option is `None`, otherwise calls `f` with the wrapped value and returns the result.
+   *
+   * Some languages call this operation flatmap.
+   */
+  andThen<U>(f: (val: T) => Option<U>): OptionPromise<U> {
+    return new OptionPromise(this.promise.then((p) => p.andThen(f)));
+  }
+  /**
+   * Returns `None` if the option is `None`, otherwise calls `f` with the wrapped value and returns the result.
+   *
+   * Some languages call this operation flatmap.
+   */
+  andThenAsync<U>(f: (val: T) => Promise<Option<U>>): OptionPromise<U> {
+    return new OptionPromise(this.promise.then((p) => p.andThenAsync(f)));
+  }
+  /**
+   * Returns the option if it contains a value, otherwise calls `f` and returns the result.
+   */
+  orElse<U>(f: () => Option<U>): OptionPromise<T | U> {
+    return new OptionPromise<T | U>(this.promise.then((p) => p.orElse(f)));
+  }
+  /**
+   * Returns the option if it contains a value, otherwise calls `f` and returns the result.
+   */
+  orElseAsync<U>(f: () => Promise<Option<U>>): OptionPromise<T | U> {
+    return new OptionPromise<T | U>(this.promise.then((p) => p.orElseAsync(f)));
   }
 }
 

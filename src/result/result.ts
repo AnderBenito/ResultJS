@@ -1,5 +1,11 @@
 import { None, none, Option, Some, some } from "../option";
 
+export enum ResultVariant {
+  Ok,
+  Err,
+  ResultPromise,
+}
+
 export type ResultOkType<T> = T extends Ok<infer U> ? U : never;
 export type ResultOkTypes<T> = {
   [key in keyof T]: T[key] extends Result<any, any>
@@ -14,6 +20,7 @@ export type ResultErrTypes<E extends Result<any, any>[]> = {
 };
 
 export interface Resultable<T, E> {
+  readonly variant: ResultVariant;
   /**
    * Returns `true` if is an `Ok` value
    */
@@ -44,6 +51,10 @@ export interface Resultable<T, E> {
    * Transforms `Result<T, E>` to `Result<U, E>` by applying the provided function `f` to the contained value of `Ok(t)` and leaving `Err` values unchanged
    */
   map<U>(f: (val: T) => U): Result<U, E>;
+  /**
+   * Transforms `Result<T, E>` to `ResultPromise<U, E>` by applying the provided async function `f` to the contained value of `Ok(t)` and leaving `Err` values unchanged
+   */
+  mapAsync<U>(f: (val: T) => Promise<U>): ResultPromise<Result<U, E>>;
   /**
    * Transforms `Result<T, E>` to `Result<T, F>` by applying the provided function `f` to the contained value of `Err(err)` and leaving `Ok` values unchanged
    */
@@ -109,6 +120,7 @@ export interface Resultable<T, E> {
 export type Result<T, E> = Ok<T> | Err<E>;
 
 export class Ok<T> implements Resultable<T, never> {
+  readonly variant: ResultVariant.Ok;
   constructor(private val: T) {}
 
   isOk(): this is Ok<T> {
@@ -128,6 +140,9 @@ export class Ok<T> implements Resultable<T, never> {
   }
   map<U>(f: (val: T) => U): Ok<U> {
     return ok(f(this.val));
+  }
+  mapAsync<U>(f: (val: T) => Promise<U>): ResultPromise<Ok<U>> {
+    return new ResultPromise(f(this.val).then((r) => ok(r)));
   }
   mapErr(): Ok<T> {
     return ok(this.val);
@@ -164,6 +179,7 @@ export class Ok<T> implements Resultable<T, never> {
 }
 
 export class Err<E> implements Resultable<never, E> {
+  readonly variant: ResultVariant.Err;
   constructor(private error: E) {}
 
   isOk(): false {
@@ -183,6 +199,9 @@ export class Err<E> implements Resultable<never, E> {
   }
   map(): Err<E> {
     return err(this.error);
+  }
+  mapAsync<U>(): ResultPromise<Result<U, E>> {
+    return new ResultPromise(Promise.resolve(this));
   }
   mapErr<F>(f: (err: E) => F): Err<F> {
     return err(f(this.error));
@@ -219,6 +238,7 @@ export class Err<E> implements Resultable<never, E> {
 }
 
 export class ResultPromise<T extends Result<any, any>> implements Promise<T> {
+  readonly variant: ResultVariant.ResultPromise;
   constructor(public readonly promise: Promise<T>) {}
   then<TResult1 = T, TResult2 = never>(
     onfulfilled?: (value: T) => TResult1 | PromiseLike<TResult1>,
@@ -236,52 +256,127 @@ export class ResultPromise<T extends Result<any, any>> implements Promise<T> {
   }
   [Symbol.toStringTag]: string;
 
+  /**
+   * Extract the contained value in `Result<T, E>` when is `Ok(t)`
+   *
+   * If is `Err(err)` throws err
+   */
   unwrap(): Promise<ResultOkType<T>> {
     return this.promise.then((p) => p.unwrap());
   }
+  /**
+   * Extract the contained value in `Result<T, E>` when is `Ok(t)`
+   *
+   * If is `Err(err)` returns the provided default value `val`
+   */
   unwrapOr(val: ResultOkType<T>): Promise<ResultOkType<T>> {
     return this.promise.then((p) => p.unwrapOr(val));
   }
+  /**
+   * Extract the contained value in `Result<T, E>` when is `Ok(t)`
+   *
+   * If is `Err(err)` returns the result of evaluating the provided function `f`
+   */
   unwrapOrElse(
     f: (err: ResultErrType<T>) => ResultOkType<T>
   ): Promise<ResultOkType<T>> {
     return this.promise.then((p) => p.unwrapOrElse(f));
   }
+  /**
+   * Transforms `ResultPromise<T, E>` to `ResultPromise<U, E>` by applying the provided function `f` to the contained value of `Ok(t)` and leaving `Err` values unchanged
+   */
   map<U>(
     f: (val: ResultOkType<T>) => U
   ): ResultPromise<Result<U, ResultErrType<T>>> {
     return new ResultPromise(this.promise.then((p) => p.map(f)));
   }
+  /**
+   * Transforms `ResultPromise<T, E>` to `ResultPromise<U, E>` by applying the provided async function `f` to the contained value of `Ok(t)` and leaving `Err` values unchanged
+   */
+  mapAsync<U>(
+    f: (val: ResultOkType<T>) => Promise<U>
+  ): ResultPromise<Result<U, ResultErrType<T>>> {
+    return new ResultPromise(this.promise.then((p) => p.mapAsync(f)));
+  }
+  /**
+   * Transforms `ResultPromise<T, E>` to `ResultPromise<T, F>` by applying the provided function `f` to the contained value of `Err(err)` and leaving `Ok` values unchanged
+   */
+  mapErr<F>(
+    f: (err: ResultErrType<T>) => F
+  ): ResultPromise<Result<ResultOkType<T>, F>> {
+    return new ResultPromise(this.promise.then((p) => p.mapErr(f)));
+  }
+  /**
+   * Transforms `ResultPromise<T,E>` into `Option<E>`, mapping `Err(e)` to `Some(e)` and `Ok(v)` to None
+   */
   err(): Promise<Option<ResultErrType<T>>> {
     return this.promise.then((p) => p.err());
   }
+  /**
+   * Transforms `ResultPromise<T,E>` into `Option<T>`, mapping `Ok(v)` to `Some(v)` and `Err(e)` to None
+   */
   ok(): Promise<Option<ResultOkType<T>>> {
     return this.promise.then((p) => p.ok());
   }
+  /**
+   * Treat the `Result` as a boolean value, where `Ok` acts like true and `Err` acts like false.
+   *
+   * The `and` method can produce a `Result<U, E>` value having a different inner type U than `Result<T, E>`.
+   *
+   * @returns `Err<E>` if this is `Err<E>`
+   * @returns `Err<F>` if this is `Ok<T>` and res is `Err<F>`
+   * @returns `Ok<U>` if this is `Ok<T>` and res is `Ok<U>`
+   */
   and<U, F>(res: Result<U, F>): ResultPromise<Result<U, ResultErrType<T> | F>> {
     return new ResultPromise(this.promise.then((p) => p.and(res)));
   }
+  /**
+   * Treat the `Result` as a boolean value, where Ok acts like true and Err acts like false.
+   *
+   * The `or` method can produce a `Result<T, F>` value having a different error type `F` `than Result<T, E>`.
+   *
+   * @returns `Ok<T>` if this is `Ok<Ts>`
+   * @returns `Ok<U>` if this is `Err<E>` and res is `Ok<U>`
+   * @returns `Err<F>` if this is `Err<E>` and res is `Err<F>`
+   */
   or<U, F>(res: Result<U, F>): ResultPromise<Result<ResultOkType<T> | U, F>> {
     return new ResultPromise(this.promise.then((p) => p.or(res)));
   }
-  mapErr<F>(f: (err: ResultErrType<T>) => F): ResultPromise<Result<T, F>> {
-    return new ResultPromise(this.promise.then((p) => p.mapErr(f)));
-  }
+  /**
+   * Calls `f` if the result is `Ok`, otherwise returns the `Err` value of self.
+   *
+   * This function can be used for control flow based on Result values.
+   */
   andThen<U, F>(
     f: (val: ResultOkType<T>) => Result<U, F>
   ): ResultPromise<Result<U, ResultErrType<T> | F>> {
     return new ResultPromise(this.promise.then((p) => p.andThen(f)));
   }
+  /**
+   * Calls async `f` if the result is `Ok`, otherwise returns the `Err` value of self.
+   *
+   * This function can be used for control flow based on Result values.
+   */
   andThenAsync<U, F>(
     f: (val: ResultOkType<T>) => Promise<Result<U, F>>
   ): ResultPromise<Result<U, ResultErrType<T> | F>> {
     return new ResultPromise(this.promise.then((p) => p.andThenAsync(f)));
   }
+  /**
+   * Calls `f` if the result is `Err`, otherwise returns the `Ok` value of self.
+   *
+   * This function can be used for control flow based on result values.
+   */
   orElse<U, F>(
     f: (error: ResultErrType<T>) => Result<U, F>
   ): ResultPromise<Result<ResultOkType<T> | U, F>> {
     return new ResultPromise(this.promise.then((p) => p.orElse(f)));
   }
+  /**
+   * Calls async `f` if the result is `Err`, otherwise returns the `Ok` value of self.
+   *
+   * This function can be used for control flow based on result values.
+   */
   orElseAsync<U, F>(
     f: (error: ResultErrType<T>) => Promise<Result<U, F>>
   ): ResultPromise<Result<ResultOkType<T> | U, F>> {
@@ -396,3 +491,9 @@ export const transposeResult = <T, E>(
 export const isResult = <T, E>(res: unknown): res is Result<T, E> => {
   return res instanceof Ok || res instanceof Err;
 };
+
+export function isResultPromise<T, E>(
+  r: Result<T, E> | ResultPromise<Result<T, E>>
+): r is ResultPromise<Result<T, E>> {
+  return r.variant === ResultVariant.ResultPromise;
+}

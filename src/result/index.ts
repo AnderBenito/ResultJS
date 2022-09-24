@@ -15,5 +15,8 @@ export {
   Resultable,
   isResult,
   ResultPromise,
+  ResultVariant,
+  isResultPromise,
 } from "./result";
 export { wrap, wrapAsync } from "./utils";
+export * from "./monads";

@@ -12,4 +12,6 @@ export {
   OptionUnwrapError,
   Optional,
   Optionable,
+  OptionPromise,
 } from "./option";
+export * from "./monads";

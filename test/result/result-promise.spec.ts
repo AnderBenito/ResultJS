@@ -1,14 +1,4 @@
-import {
-  err,
-  isResult,
-  none,
-  ok,
-  Option,
-  Result,
-  ResultPromise,
-  some,
-  transposeResult,
-} from "../../src";
+import { err, ok, Result, ResultPromise } from "../../src";
 
 describe("ResultPromise test", () => {
   const OK_VALUE = 10;
