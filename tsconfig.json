@@ -8,7 +8,7 @@
         "removeComments": true,
         "noLib": false,
         "target": "es6",
-        "sourceMap": true,
+        "sourceMap": false,
         "lib": [
             "es6"
         ],
