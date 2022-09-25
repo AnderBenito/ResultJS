@@ -224,7 +224,7 @@ export class None implements Optionable<never> {
   unwrapOrElse<T>(f: () => T): T {
     return f();
   }
-  unwrapOrUndefined<T>(): T | undefined {
+  unwrapOrUndefined(): undefined {
     return undefined;
   }
   okOr<E>(error: E): Err<E> {
