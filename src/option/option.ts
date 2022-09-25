@@ -281,10 +281,11 @@ export const none = () => _none;
 /**
  * Creates an `Option` of `Some(val)` if `val` is defined. If `val` is undefined or null creates a `None` value.
  */
-export const optionFrom = <T>(val?: T): Option<T> =>
-  hasValue(val) ? some(val) : none();
+export const optionFrom = <T>(val: Optional<T>): Option<T> =>
+  isDefined(val) ? some(val) : none();
 
-const hasValue = <T>(val?: T): val is T => val !== undefined && val !== null;
+const isDefined = <T>(val: Optional<T>): val is T =>
+  val !== undefined && val !== null;
 
 /**
  * Transforms a `Option` of a `Result` into an `Result` of an `Option`

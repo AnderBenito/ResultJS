@@ -3,6 +3,7 @@
         "module": "commonjs",
         "declaration": true,
         "noImplicitAny": false,
+        "strictNullChecks": true,
         "baseUrl": "./",
         "outDir": "./dist",
         "removeComments": true,
