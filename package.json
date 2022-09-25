@@ -30,7 +30,7 @@
     "prettier": "^2.3.2",
     "ts-jest": "^28.0.8"
   },
-  "keywords": [],
+  "keywords": ["result", "error", "rust", "option", "maybe", "either"],
   "author": "Ander Benito <anderbenito96@gmail.com>",
   "license": "MIT"
 }
